@@ -1,1 +1,0 @@
-# Pytemplate package initialization

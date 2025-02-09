@@ -20,11 +20,20 @@ PyTemplate UV is a powerful CLI tool for creating Python project templates using
 
 ## Installation
 
-```bash
-pip install pytemplate-uv
-# or
-uv pip install pytemplate-uv
-```
+To install the project creator tool:
+
+1. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   ```
+
+2. Install the tool:
+   ```bash
+   pip install -e .
+   ```
+
+3. Now you can use the `create-project` command from anywhere while your virtual environment is activated.
 
 ## Usage
 

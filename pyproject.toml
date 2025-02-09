@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytemplate-uv"
-version = "0.1.0"
+version = "0.2.0"
 description = """PyTemplate UV: A Modern Python Project Generator
 
 A powerful CLI tool that simplifies Python project creation using the `uv` package manager. Streamline your development workflow with standardized, production-ready project templates.
@@ -46,7 +46,9 @@ dependencies = [
     "typer>=0.9.0",
     "rich>=13.7.0",
     "cookiecutter>=2.5.0",
-    "pytest>=7.4.4"
+    "pytest>=7.4.4",
+    "loguru>=0.7.3",
+    "pyyaml>=6.0.2"
 ]
 
 [project.urls]
@@ -73,12 +75,11 @@ docs = [
 packages = ["pytemplate"]
 
 [project.scripts]
-# Project management scripts
 pytemplate = "pytemplate.main:app"
-create-project = "pytemplate.main:app"
+pytemplate-custom = "pytemplate.main:custom_project_cli"
 
 [tool.setuptools.package-data]
-"pytemplate" = ["../templates/*", "../templates/**/*", "../templates/**/**/*"]
+"pytemplate" = ["templates/*", "templates/**/*"]
 
 [tool.setuptools_scm]
 write_to = "version.py"

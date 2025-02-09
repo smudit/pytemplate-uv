@@ -1,0 +1,26 @@
+[project]
+name = "{{ cookiecutter.project_name }}"
+version = "{{ cookiecutter.version }}"
+description = "{{ cookiecutter.description }}"
+authors = ["Your Name <you@example.com>"]
+requires-python = ">={{ cookiecutter.python_version }}"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=68.2.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py{{ cookiecutter.python_version.replace('.', '') }}"
+
+[tool.black]
+line-length = 100
+target-version = ["py{{ cookiecutter.python_version.replace('.', '') }}"]
+
+[tool.mypy]
+python_version = "{{ cookiecutter.python_version }}"
+warn_return_any = true
