@@ -1,28 +1,30 @@
 project:
-  name: my_library
-  description: A Python library for doing amazing things
-  type: lib
-  python_version: "3.8"
+  name: my_workspace
+  description: A development workspace for multiple services
+  type: workspace
+  python_version: "3.12"
   author: "Your Name"
   email: "your.email@example.com"
   version: "0.1.0"
   license: "MIT"
 
 github:
-  repo_name: my-library
-  add_on_github: true
+  repo_name: my-workspace
+  add_on_github: false
   github_username: "your-github-username"
 
 docker:
-  docker_image: false
-  docker_compose: false
+  docker_image: true
+  docker_compose: true
   use_existing_docker_image: null
 
 devcontainer:
-  add_devcontainer: false
+  add_devcontainer: true
 
 service_ports:
-  ports: []
+  ports:
+    - 8000
+    - 8001
 
 development:
   use_pytest: true

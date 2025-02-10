@@ -77,16 +77,19 @@ def _build_cookiecutter_command(
     template_path: Path, context: dict, no_input: bool = False, force: bool = False
 ) -> list[str]:
     """Build the cookiecutter command with appropriate options.
+
     Args:
     ----
-        template_path: Path to the project template
-        context: Context variables for the template
-        no_input: Whether to skip interactive prompts
-        force: Whether to overwrite existing project directory
-    Returns:
-        A list of command arguments.
+        template_path (Path): Path to the project template.
+        context (dict): Context variables for the template.
+        no_input (bool, optional): If True, skip interactive prompts.
+        force (bool, optional): If True, overwrite the existing project directory.
 
-    """  # noqa: D205, D411
+    Returns:
+    -------
+        list[str]: A list of command arguments.
+
+    """
     cookiecutter_cmd = [
         "cookiecutter",
         str(template_path),
@@ -142,6 +145,14 @@ def create_project(
 
 class ProjectCreator:
     def __init__(self, config_path: str, interactive: bool = False):
+        """Initialize a new instance of ProjectCreator.
+
+        Args:
+        ----
+            config_path (str): Path to the YAML configuration file.
+            interactive (bool, optional): If True, enable interactive mode (default is False).
+
+        """
         self.config_path = Path(config_path)
         self.interactive = interactive
         self.config: dict[str, Any] = {}

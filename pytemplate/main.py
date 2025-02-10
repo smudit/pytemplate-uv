@@ -16,6 +16,10 @@ app = typer.Typer(
     rich_help_panel=True,
 )
 
+# Define the directory containing the configuration templates as a global variable.
+# This way, the path is not hardcoded deep inside a function.
+CONFIG_TEMPLATES_DIR = Path(__file__).parent.parent / "config_templates"
+
 
 @app.command()
 def create_project_cli(
@@ -62,9 +66,8 @@ def create_config(
         typer.echo(f"Invalid project type: {project_type}. Must be one of: lib, service, workspace")
         raise typer.Exit(code=1)
 
-    # Get project root directory (parent of scripts directory)
-    project_root = Path(__file__).parent.parent
-    config_template = project_root / "configs" / f"{project_type}.yaml"
+    # Use the variable CONFIG_TEMPLATES_DIR to build the configuration template path.
+    config_template = CONFIG_TEMPLATES_DIR / f"{project_type}.yaml"
     output_path = Path(output_path)
 
     try:

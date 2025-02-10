@@ -1,30 +1,28 @@
 project:
-  name: my_service
-  description: A production-ready service
-  type: service
-  python_version: "3.11"
+  name: my_library
+  description: A Python library for doing amazing things
+  type: lib
+  python_version: "3.12"
   author: "Your Name"
   email: "your.email@example.com"
   version: "0.1.0"
   license: "MIT"
 
 github:
-  repo_name: my-service
-  add_on_github: true
+  repo_name: my-library
+  add_on_github: false
   github_username: "your-github-username"
 
 docker:
-  docker_image: true
-  docker_compose: true
+  docker_image: false
+  docker_compose: false
   use_existing_docker_image: null
 
 devcontainer:
-  add_devcontainer: true
+  add_devcontainer: false
 
 service_ports:
-  ports:
-    - 8080
-    - 8081
+  ports: []
 
 development:
   use_pytest: true
