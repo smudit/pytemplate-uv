@@ -306,20 +306,24 @@ class ProjectCreator:
             logger.error(f"Failed to create project addons: {str(e)}")
             return False
 
-    def create_github_repo(self) -> None:
-        """Initialize GitHub repository using GitHub CLI."""
-        repo_name = self.config["github"]["repo_name"]
-        try:
-            # Check if repo exists
-            try:
-                output = subprocess.check_output(["gh", "repo", "view", repo_name], text=True)
-                logger.info(f"Repository {repo_name} already exists")
-                return
-            except subprocess.CalledProcessError:
-                pass
+    def create_github_repo(self) -> bool:
+        """Create a GitHub repository using the GitHub CLI (gh) command.
 
-            subprocess.check_call(["gh", "repo", "create", repo_name, "--public"])
-            logger.info(f"Created GitHub repository: {repo_name}")
+        Reads the github configuration to determine if the repository should be private.
+        """
+        github_config = self.config.get("github", {})
+        github_config = self.config.get("github", {})
+        repo_name = github_config.get("repo_name", "")
+        is_private = github_config.get("repo_private", False)
+        private_flag = "--private" if is_private else "--public"
+
+        # Build the GitHub CLI command. Adjust additional flags as needed.
+        cmd = ["gh", "repo", "create", repo_name, private_flag, "--source=.", "--push"]
+        logger.info(f"Running GitHub command: {' '.join(cmd)}")
+
+        try:
+            subprocess.check_call(cmd)
+            return True
         except subprocess.CalledProcessError as e:
-            logger.error(f"GitHub operation failed: {str(e)}")
-            raise
+            logger.error(f"Failed to run GitHub command: {e}")
+            return False

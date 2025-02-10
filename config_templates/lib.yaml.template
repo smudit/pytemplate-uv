@@ -12,6 +12,7 @@ github:
   repo_name: my-library
   add_on_github: false
   github_username: "your-github-username"
+  repo_private: true
 
 docker:
   docker_image: false
