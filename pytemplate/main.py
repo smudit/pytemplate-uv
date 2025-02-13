@@ -47,8 +47,7 @@ def create_project_from_config(
     creator = ProjectCreator(config_path, interactive)
     if not creator.create_project_from_config():
         raise typer.Exit(code=1)
-    logger.success("Project created successfully!")
-    typer.echo("Project created successfully!")
+    typer.echo("Project creation completed")
 
 
 @app.command()
@@ -67,7 +66,7 @@ def create_config(
         raise typer.Exit(code=1)
 
     # Use the variable CONFIG_TEMPLATES_DIR to build the configuration template path.
-    config_template = CONFIG_TEMPLATES_DIR / f"{project_type}.yaml"
+    config_template = CONFIG_TEMPLATES_DIR / f"{project_type}.yaml.template"
     output_path = Path(output_path)
 
     try:

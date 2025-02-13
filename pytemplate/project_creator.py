@@ -121,8 +121,13 @@ def create_project(
 
     try:
         result = subprocess.run(cookiecutter_cmd, text=True, check=True)
-        logger.info("Project created successfully!")
-        console.print("[green]Project created successfully![/]")
+        if project_name:
+            full_path = (Path.cwd() / project_name).resolve()
+            logger.info(f"Project created successfully at {full_path}")
+            console.print(f"[green]Project created successfully at {full_path}[/]")
+        else:
+            logger.info("Project created successfully!")
+            console.print("[green]Project created successfully![/]")
 
         if result.stdout:
             console.print(f"[green]{result.stdout.strip()}[/]")
@@ -263,43 +268,46 @@ class ProjectCreator:
                 self.project_path = Path(project_name)
                 logger.info(f"Created Python package structure at: {self.project_path}")
 
-                # Return early for lib projects since they don't need additional addons
+                # For lib projects, we're done unless GitHub repo is needed
                 if self.config["github"]["add_on_github"]:
-                    self.create_github_repo()
+                    if not self.create_github_repo():
+                        return False
+                logger.info(f"Project created successfully at {self.project_path}")
                 return True
 
-                # For non-lib project types (service, workspace), add project structure and addons
-                # Prepare cookiecutter context for addons
-                context = {
-                    "project_name": project_name,
-                    "project_type": project_type,
-                    "description": self.config["project"].get("description", ""),
-                    "version": self.config.get("version", "0.1.0"),
-                    "python_version": self.config["project"].get("python_version", "3.11"),
-                    "github": self.config["github"],
-                    "docker": self.config["docker"],
-                    "devcontainer": self.config["devcontainer"],
-                    "service_ports": self.config.get("service_ports", {"ports": ["8000"]}),
-                }
+            # For non-lib project types (service, workspace), add project structure and addons
+            # Prepare cookiecutter context for addons
+            context = {
+                "project_name": project_name,
+                "project_type": project_type,
+                "description": self.config["project"].get("description", ""),
+                "version": self.config.get("version", "0.1.0"),
+                "python_version": self.config["project"].get("python_version", "3.11"),
+                "github": self.config["github"],
+                "docker": self.config["docker"],
+                "devcontainer": self.config["devcontainer"],
+                "service_ports": self.config.get("service_ports", {"ports": ["8000"]}),
+            }
 
-                # Get template path for addons
-                template_path = str(Path(__file__).parent.parent / "templates" / "project-template")
+            # Get template path for addons
+            template_path = str(Path(__file__).parent.parent / "templates" / "pyproject-template")
 
-                # Add non-package addons using cookiecutter
-                output_dir = cookiecutter(
-                    template_path,
-                    no_input=not self.interactive,
-                    extra_context=context,
-                    overwrite_if_exists=True,
-                )
+            # Add non-package addons using cookiecutter
+            output_dir = cookiecutter(
+                template_path,
+                no_input=not self.interactive,
+                extra_context=context,
+                overwrite_if_exists=True,
+            )
 
-                self.project_path = Path(output_dir)
-                logger.info(f"Project addons created at: {self.project_path}")
+            self.project_path = Path(output_dir)
 
             # Initialize GitHub repository if requested
             if self.config["github"]["add_on_github"]:
-                self.create_github_repo()
+                if not self.create_github_repo():
+                    return False
 
+            logger.info(f"Project created successfully at {self.project_path}")
             return True
 
         except Exception as e:
@@ -310,20 +318,43 @@ class ProjectCreator:
         """Create a GitHub repository using the GitHub CLI (gh) command.
 
         Reads the github configuration to determine if the repository should be private.
+        Changes to the project directory before running the command and changes back after.
         """
-        github_config = self.config.get("github", {})
+        if not self.project_path:
+            logger.error("Project path not set")
+            return False
+
         github_config = self.config.get("github", {})
         repo_name = github_config.get("repo_name", "")
         is_private = github_config.get("repo_private", False)
         private_flag = "--private" if is_private else "--public"
 
-        # Build the GitHub CLI command. Adjust additional flags as needed.
-        cmd = ["gh", "repo", "create", repo_name, private_flag, "--source=.", "--push"]
-        logger.info(f"Running GitHub command: {' '.join(cmd)}")
+        # Store current directory
+        current_dir = os.getcwd()
 
         try:
+            # Change to project directory
+            os.chdir(str(self.project_path))
+            logger.info(f"Changed to project directory: {self.project_path}")
+
+            # Initialize git repository if needed
+            if not (self.project_path / ".git").exists():
+                logger.info("Initializing git repository...")
+                subprocess.check_call(["git", "init"])
+                subprocess.check_call(["git", "add", "."])
+                subprocess.check_call(["git", "commit", "-m", "Initial commit"])
+
+            # Build the GitHub CLI command
+            cmd = ["gh", "repo", "create", repo_name, private_flag, "--source=.", "--push"]
+            logger.info(f"Running GitHub command: {' '.join(cmd)}")
+
             subprocess.check_call(cmd)
+            logger.info("GitHub repository created and code pushed successfully")
             return True
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to run GitHub command: {e}")
             return False
+        finally:
+            # Always change back to original directory
+            os.chdir(current_dir)
+            logger.info(f"Changed back to original directory: {current_dir}")
