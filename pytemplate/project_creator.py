@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 """Project creator module for handling project creation and configuration."""
 
 from __future__ import annotations
@@ -15,17 +17,20 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
+from .constants import DEFAULT_USER_CONFIG_FILE
 from .logger import logger
+from .template_manager import TemplateManager, TemplateResolver
 
 console = Console()
 
 
-def _validate_template(template: str) -> Path:
+def _validate_template(template: str, resolver: TemplateResolver) -> Path:
     """Validate and return the path to the specified template.
 
     Args:
     ----
         template (str): Name of the project template.
+        resolver (TemplateResolver): Template resolver instance.
 
     Returns:
     -------
@@ -36,15 +41,15 @@ def _validate_template(template: str) -> Path:
         typer.BadParameter: If template is not found.
 
     """
-    templates_dir = Path(__file__).parent.parent / "templates"
-    template_path = templates_dir / f"{template}-template"
-
-    console.print(f"[yellow]Checking template path: {template_path}[/]")
-
-    if not template_path.exists():
-        available_templates = [
-            d.name.replace("-template", "") for d in templates_dir.glob("*-template") if d.is_dir()
-        ]
+    try:
+        template_path = resolver.get_template_path("project_templates", template)
+        console.print(f"[green]Using template path: {template_path}[/]")
+        return template_path
+    except ValueError as e:
+        # Get available templates from config
+        available_templates = list(
+            resolver.config["template_paths"]["templates"]["project_templates"].keys()
+        )
 
         error_text = Text("Template not found!", style="bold red")
         suggestion_text = Text(
@@ -52,10 +57,8 @@ def _validate_template(template: str) -> Path:
         )
 
         console.print(Panel(Text.assemble(error_text, suggestion_text), border_style="red"))
-        raise typer.BadParameter(f"Template '{template}' not found")
-
-    console.print(f"[green]Using template path: {template_path}[/]")
-    return template_path
+        console.print(f"Error: {str(e)}")
+        raise typer.Exit(code=1)
 
 
 def _get_context() -> dict[str, str]:
@@ -73,36 +76,15 @@ def _get_context() -> dict[str, str]:
     }
 
 
-def _build_cookiecutter_command(
-    template_path: Path, context: dict, no_input: bool = False, force: bool = False
-) -> list[str]:
-    """Build the cookiecutter command with appropriate options.
-
-    Args:
-    ----
-        template_path (Path): Path to the project template.
-        context (dict): Context variables for the template.
-        no_input (bool, optional): If True, skip interactive prompts.
-        force (bool, optional): If True, overwrite the existing project directory.
-
-    Returns:
-    -------
-        list[str]: A list of command arguments.
-
-    """
-    cookiecutter_cmd = [
-        "cookiecutter",
+def _create_project_with_cookiecutter(
+    template_path: Path, context: dict, no_input: bool, overwrite: bool
+) -> str:
+    return cookiecutter(
         str(template_path),
-        *[f"{k}={v}" for k, v in context.items()],
-    ]
-
-    if no_input:
-        cookiecutter_cmd.append("--no-input")
-
-    if force:
-        cookiecutter_cmd.append("--overwrite-if-exists")
-
-    return cookiecutter_cmd
+        no_input=no_input,
+        extra_context=context,
+        overwrite_if_exists=overwrite,
+    )
 
 
 def create_project(
@@ -112,40 +94,29 @@ def create_project(
     force: bool = False,
 ) -> None:
     """Create a new project from a specified template."""
-    template_path = _validate_template(template)
+    resolver = TemplateResolver()
+    template_path = _validate_template(template, resolver)
     context = _get_context()
     if project_name:
         context["project_name"] = project_name
 
-    cookiecutter_cmd = _build_cookiecutter_command(template_path, context, no_input, force)
-
     try:
-        result = subprocess.run(cookiecutter_cmd, text=True, check=True)
+        # Use cookiecutter directly instead of subprocess
+        output_dir = _create_project_with_cookiecutter(template_path, context, no_input, force)
+
         if project_name:
-            full_path = (Path.cwd() / project_name).resolve()
+            full_path = Path(output_dir).resolve()
             logger.info(f"Project created successfully at {full_path}")
             console.print(f"[green]Project created successfully at {full_path}[/]")
         else:
             logger.info("Project created successfully!")
             console.print("[green]Project created successfully![/]")
 
-        if result.stdout:
-            console.print(f"[green]{result.stdout.strip()}[/]")
-
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         logger.error("Project creation failed")
         console.print("[red]Project creation failed:[/]")
-        console.print(f"Command: {' '.join(e.cmd)}")
-
-        if e.stdout:
-            console.print("[yellow]Standard Output:[/]")
-            console.print(e.stdout)
-
-        if e.stderr:
-            console.print("[red]Error Output:[/]")
-            console.print(e.stderr)
-
-        raise typer.Exit(code=1)  # noqa: B904
+        console.print(f"Error: {str(e)}")
+        raise typer.Exit(code=1)
 
 
 class ProjectCreator:
@@ -162,6 +133,10 @@ class ProjectCreator:
         self.interactive = interactive
         self.config: dict[str, Any] = {}
         self.project_path: Path | None = None
+
+        # Initialize template management
+        self.template_resolver = TemplateResolver(DEFAULT_USER_CONFIG_FILE)
+        self.template_manager = TemplateManager(self.template_resolver)
 
     def load_config(self) -> bool:
         """Load and validate configuration from YAML file.
@@ -259,13 +234,20 @@ class ProjectCreator:
             # For library projects, first create the Python package structure
             if project_type == "lib":
                 logger.info("Creating library project structure...")
-                create_project(
-                    project_name=project_name,
-                    template="pyproject",  # _validate_template will append "-template"
-                    no_input=not self.interactive,
-                    force=True,
+                template_path = self.template_resolver.get_template_path(
+                    "project_templates", "pyproject"
                 )
-                self.project_path = Path(project_name)
+
+                context = {
+                    "project_name": project_name,
+                    **_get_context(),
+                }
+
+                output_dir = _create_project_with_cookiecutter(
+                    template_path, context, not self.interactive, True
+                )
+
+                self.project_path = Path(output_dir)
                 logger.info(f"Created Python package structure at: {self.project_path}")
 
                 # For lib projects, we're done unless GitHub repo is needed
@@ -290,14 +272,13 @@ class ProjectCreator:
             }
 
             # Get template path for addons
-            template_path = str(Path(__file__).parent.parent / "templates" / "pyproject-template")
+            template_path = self.template_resolver.get_template_path(
+                "project_templates", "pyproject"
+            )
 
             # Add non-package addons using cookiecutter
-            output_dir = cookiecutter(
-                template_path,
-                no_input=not self.interactive,
-                extra_context=context,
-                overwrite_if_exists=True,
+            output_dir = _create_project_with_cookiecutter(
+                template_path, context, not self.interactive, True
             )
 
             self.project_path = Path(output_dir)
@@ -320,6 +301,16 @@ class ProjectCreator:
         Reads the github configuration to determine if the repository should be private.
         Changes to the project directory before running the command and changes back after.
         """
+
+        @contextmanager
+        def change_directory(path: Path):
+            current_dir = os.getcwd()
+            os.chdir(path)
+            try:
+                yield
+            finally:
+                os.chdir(current_dir)
+
         if not self.project_path:
             logger.error("Project path not set")
             return False
@@ -329,32 +320,22 @@ class ProjectCreator:
         is_private = github_config.get("repo_private", False)
         private_flag = "--private" if is_private else "--public"
 
-        # Store current directory
-        current_dir = os.getcwd()
-
         try:
-            # Change to project directory
-            os.chdir(str(self.project_path))
-            logger.info(f"Changed to project directory: {self.project_path}")
+            with change_directory(self.project_path):
+                logger.info(f"Changed to project directory: {self.project_path}")
 
-            # Initialize git repository if needed
-            if not (self.project_path / ".git").exists():
-                logger.info("Initializing git repository...")
-                subprocess.check_call(["git", "init"])
-                subprocess.check_call(["git", "add", "."])
-                subprocess.check_call(["git", "commit", "-m", "Initial commit"])
+                if not (self.project_path / ".git").exists():
+                    logger.info("Initializing git repository...")
+                    subprocess.check_call(["git", "init"])
+                    subprocess.check_call(["git", "add", "."])
+                    subprocess.check_call(["git", "commit", "-m", "Initial commit"])
 
-            # Build the GitHub CLI command
-            cmd = ["gh", "repo", "create", repo_name, private_flag, "--source=.", "--push"]
-            logger.info(f"Running GitHub command: {' '.join(cmd)}")
+                cmd = ["gh", "repo", "create", repo_name, private_flag, "--source=.", "--push"]
+                logger.info(f"Running GitHub command: {' '.join(cmd)}")
 
-            subprocess.check_call(cmd)
-            logger.info("GitHub repository created and code pushed successfully")
-            return True
+                subprocess.check_call(cmd)
+                logger.info("GitHub repository created and code pushed successfully")
+                return True
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to run GitHub command: {e}")
             return False
-        finally:
-            # Always change back to original directory
-            os.chdir(current_dir)
-            logger.info(f"Changed back to original directory: {current_dir}")

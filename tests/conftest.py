@@ -1,4 +1,5 @@
 """Pytest configuration and fixtures for pytemplate-uv."""
+
 import os
 import tempfile
 from pathlib import Path
@@ -10,8 +11,10 @@ import pytest
 def temp_project_dir() -> str:
     """Create a temporary directory for project creation.
 
-    Returns:
+    Returns
+    -------
         str: Path to the temporary directory
+
     """
     with tempfile.TemporaryDirectory() as tmpdir:
         original_cwd = os.getcwd()
@@ -24,7 +27,9 @@ def temp_project_dir() -> str:
 def project_templates_path() -> Path:
     """Get the path to project templates.
 
-    Returns:
+    Returns
+    -------
         Path: Path to the templates directory
+
     """
     return Path(__file__).parent.parent / "templates"
