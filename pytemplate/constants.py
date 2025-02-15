@@ -4,10 +4,10 @@ from pathlib import Path
 
 # Base paths
 PACKAGE_ROOT = Path(__file__).parent
-CONFIG_DIR = PACKAGE_ROOT / "config"
+CONFIG_DIR = PACKAGE_ROOT.parent / "config_templates"
 
 # Template paths
-TEMPLATE_PATHS_FILE = CONFIG_DIR / "template_paths.yaml"
+TEMPLATE_PATHS_FILE = PACKAGE_ROOT.parent / "template_paths.yaml"
 DEFAULT_USER_CONFIG_DIR = Path.home() / ".pytemplate"
 DEFAULT_USER_CONFIG_FILE = DEFAULT_USER_CONFIG_DIR / "config.yaml"
 

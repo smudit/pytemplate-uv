@@ -85,9 +85,76 @@ pytemplate-uv create-project --template fastapi --name my-api-project
 
 ### Running Tests
 
+The project uses pytest for testing. The test suite includes comprehensive tests for all CLI commands and edge cases.
+
+#### Setting Up Test Environment
+
+1. Create a dedicated test virtual environment:
+   ```bash
+   # Using uv
+   uv venv .venv-test
+   source .venv-test/bin/activate  # On Windows: .venv-test\Scripts\activate
+   uv pip install -e .[dev]
+
+   # Or using standard venv
+   python -m venv .venv-test
+   source .venv-test/bin/activate  # On Windows: .venv-test\Scripts\activate
+   pip install -e .[dev]
+   ```
+
+2. Run tests using the specific virtual environment:
+   ```bash
+   # Using the activated virtual environment
+   pytest
+
+   # Or specify python path directly
+   .venv-test/bin/python -m pytest  # On Windows: .venv-test\Scripts\python -m pytest
+   ```
+
+#### Test Commands
+
 ```bash
+# Run all tests
 pytest
+
+# Run tests with coverage report
+pytest --cov=pytemplate tests/
+
+# Run specific test file
+pytest tests/test_cli.py
+
+# Run tests matching specific pattern
+pytest -k "test_create_project"
+
+# Run tests with specific python interpreter
+/path/to/venv/bin/python -m pytest
 ```
+
+#### Test Structure
+
+- `tests/conftest.py`: Contains test fixtures including:
+  - `temp_project_dir`: Temporary directory for project creation
+  - `project_templates_path`: Path to test templates
+  - `temp_config_dir`: Temporary directory for config files
+  - `sample_lib_config`: Sample library configuration
+  - `temp_templates_dir`: Temporary templates directory
+  - `mock_template_config`: Mock template configuration
+
+- `tests/test_cli.py`: CLI command tests covering:
+  - Project creation (basic, with template, no-input, force)
+  - Config-based project creation
+  - Configuration file generation
+  - Template management (init, list, copy)
+  - Edge cases and error scenarios
+
+#### Test Coverage
+
+The test suite aims to cover:
+- All CLI commands and their options
+- Edge cases and error handling
+- Template management functionality
+- Project creation workflows
+- Configuration file handling
 
 ### Linting
 

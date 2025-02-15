@@ -170,7 +170,10 @@ def list_templates() -> None:
 @templates_app.command("copy")
 def copy_templates(
     category: str | None = typer.Option(
-        None, "--category", "-c", help="Specific template category to copy"
+        None,
+        "--category",
+        "-c",
+        help="Specific template category to copy. Use with --category/-c flag (e.g. -c project_templates or -c config_templates)",
     ),
 ) -> None:
     """Copy templates to local directory."""

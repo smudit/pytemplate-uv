@@ -1,12 +1,9 @@
-from contextlib import contextmanager
-
-"""Project creator module for handling project creation and configuration."""
-
 from __future__ import annotations
 
 import os
 import re
 import subprocess
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
