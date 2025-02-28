@@ -10,15 +10,10 @@ from typing import Any
 import typer
 import yaml
 from cookiecutter.main import cookiecutter
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
 
 from .constants import DEFAULT_USER_CONFIG_FILE
 from .logger import logger
 from .template_manager import TemplateManager, TemplateResolver
-
-console = Console()
 
 
 def _validate_template(template: str, resolver: TemplateResolver) -> Path:
@@ -40,7 +35,7 @@ def _validate_template(template: str, resolver: TemplateResolver) -> Path:
     """
     try:
         template_path = resolver.get_template_path("project_templates", template)
-        console.print(f"[green]Using template path: {template_path}[/]")
+        logger.info(f"Using template path: {template_path}")
         return template_path
     except ValueError as e:
         # Get available templates from config
@@ -48,13 +43,9 @@ def _validate_template(template: str, resolver: TemplateResolver) -> Path:
             resolver.config["template_paths"]["templates"]["project_templates"].keys()
         )
 
-        error_text = Text("Template not found!", style="bold red")
-        suggestion_text = Text(
-            f"\nAvailable templates: {', '.join(available_templates)}", style="yellow"
-        )
-
-        console.print(Panel(Text.assemble(error_text, suggestion_text), border_style="red"))
-        console.print(f"Error: {str(e)}")
+        error_msg = f"Template not found! Available templates: {', '.join(available_templates)}"
+        logger.error(error_msg)
+        logger.error(f"Error: {str(e)}")
         raise typer.Exit(code=1)
 
 
@@ -104,15 +95,11 @@ def create_project(
         if project_name:
             full_path = Path(output_dir).resolve()
             logger.info(f"Project created successfully at {full_path}")
-            console.print(f"[green]Project created successfully at {full_path}[/]")
         else:
             logger.info("Project created successfully!")
-            console.print("[green]Project created successfully![/]")
 
     except Exception as e:
-        logger.error("Project creation failed")
-        console.print("[red]Project creation failed:[/]")
-        console.print(f"Error: {str(e)}")
+        logger.error(f"Project creation failed: {str(e)}")
         raise typer.Exit(code=1)
 
 

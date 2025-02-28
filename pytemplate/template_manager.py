@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from rich.console import Console
 
 from .constants import (
     DEFAULT_USER_CONFIG_FILE,
@@ -16,8 +15,6 @@ from .constants import (
     TEMPLATE_PATHS_FILE,
 )
 from .logger import logger
-
-console = Console()
 
 
 class TemplateResolver:
