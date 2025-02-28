@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -59,18 +60,39 @@ def create_project_cli(
     create_project(project_name, template, no_input, force)
 
 
+def path_callback(value: str) -> Path:
+    return Path(value)
+
+
 @app.command()
 def create_project_from_config(
-    config_path: Path = typer.Argument(
-        ..., help="Path to the configuration YAML file", callback=lambda x: Path(x)
-    ),
+    config_path: Annotated[
+        Path, typer.Argument(help="Path to the configuration YAML file", callback=path_callback)
+    ],
     interactive: bool = typer.Option(
         False, "--interactive", "-i", help="Enable interactive mode for configuration customization"
     ),
+    debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug logging"),
+    force: bool = typer.Option(
+        False, "--force", "-f", help="Overwrite existing project directory", show_default=True
+    ),
 ) -> None:
     """Create a new project from a configuration file with addons like Docker, devcontainer etc."""
+    if debug:
+        # Enable debug logging for the entire package
+        logger.enable("pytemplate")
+        logger.debug("Debug logging enabled")
+
+    if force:
+        confirm = typer.confirm(
+            "Are you sure you want to overwrite the existing project directory?"
+        )
+        if not confirm:
+            console.print("Operation cancelled.")
+            raise typer.Exit()
+
     creator = ProjectCreator(config_path, interactive)
-    if not creator.create_project_from_config():
+    if not creator.create_project_from_config(force=force):
         raise typer.Exit(code=1)
     console.print("Project creation completed")
 

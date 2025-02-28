@@ -218,7 +218,7 @@ class ProjectCreator:
             return False
         return True
 
-    def create_project_from_config(self) -> bool:
+    def create_project_from_config(self, force: bool = False) -> bool:
         """Create and initialize project addons like docker, devcontainer etc."""
         try:
             # Load and validate config first
@@ -234,14 +234,13 @@ class ProjectCreator:
                 template_path = self.template_resolver.get_template_path(
                     "project_templates", "pyproject"
                 )
-
                 context = {
                     "project_name": project_name,
                     **_get_context(),
                 }
 
                 output_dir = _create_project_with_cookiecutter(
-                    template_path, context, not self.interactive, True
+                    template_path, context, not self.interactive, force
                 )
 
                 self.project_path = Path(output_dir)
@@ -255,7 +254,6 @@ class ProjectCreator:
                 return True
 
             # For non-lib project types (service, workspace), add project structure and addons
-            # Prepare cookiecutter context for addons
             context = {
                 "project_name": project_name,
                 "project_type": project_type,
@@ -268,14 +266,14 @@ class ProjectCreator:
                 "service_ports": self.config.get("service_ports", {"ports": ["8000"]}),
             }
 
-            # Get template path for addons
+            # Get template path for addons and normalize it
             template_path = self.template_resolver.get_template_path(
                 "project_templates", "pyproject"
             )
 
             # Add non-package addons using cookiecutter
             output_dir = _create_project_with_cookiecutter(
-                template_path, context, not self.interactive, True
+                template_path, context, not self.interactive, force
             )
 
             self.project_path = Path(output_dir)
@@ -314,6 +312,10 @@ class ProjectCreator:
 
         github_config = self.config.get("github", {})
         repo_name = github_config.get("repo_name", "")
+        if not re.fullmatch(r"^[a-z0-9-_]{1,100}$", repo_name.lower()):
+            raise ValueError(
+                f"Invalid repository name: {repo_name} - must be 1-100 chars a-z, 0-9, -, _"
+            )
         is_private = github_config.get("repo_private", False)
         private_flag = "--private" if is_private else "--public"
 

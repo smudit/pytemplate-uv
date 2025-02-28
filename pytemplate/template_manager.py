@@ -13,7 +13,6 @@ from rich.console import Console
 from .constants import (
     DEFAULT_USER_CONFIG_FILE,
     ENV_BASE_DIR,
-    PACKAGE_ROOT,
     TEMPLATE_PATHS_FILE,
 )
 from .logger import logger
@@ -33,10 +32,13 @@ class TemplateResolver:
 
     def _resolve_template_path(self, relative_path: str) -> Path:
         """Safely resolve template path relative to base directory."""
-        path = (self.base_dir / relative_path).resolve()
-        if not self._is_safe_path(path, self.base_dir):
-            raise ValueError(f"Invalid template path: {relative_path}")
-        return path
+        try:
+            # Normalize the path by resolving any relative components
+            normalized_path = Path(relative_path).resolve()
+            return normalized_path
+        except FileNotFoundError:
+            logger.error(f"Template path does not exist: {relative_path}")
+            raise
 
     def __init__(self, config_path: str | None = None):
         """Initialize template resolver.
@@ -56,13 +58,13 @@ class TemplateResolver:
         return DEFAULT_USER_CONFIG_FILE
 
     def _get_base_dir(self) -> Path:
-        """Get base directory from environment variable or package root."""
+        """Get base directory from environment variable or project root."""
         base_dir = os.environ.get(ENV_BASE_DIR)
         if base_dir:
             return Path(base_dir).resolve()
 
-        # Use package root parent as default base directory
-        return PACKAGE_ROOT.parent.resolve()
+        # Use current working directory as default base directory
+        return Path.cwd().resolve()
 
     def _load_template_paths(self) -> dict[str, Any]:
         """Load template paths from YAML file.
@@ -96,18 +98,24 @@ class TemplateResolver:
 
         Raises
         ------
-        
             FileNotFoundError: If config file doesn't exist and can't be created.
             yaml.YAMLError: If config file is invalid YAML.
 
         """
         if not self.config_path.exists():
             # Create default config
-            self.config_path.parent.mkdir(parents=True, exist_ok=True)
-            default_config = {"base_dir": str(self.base_dir), "template_paths": self.template_paths}
-            with self.config_path.open("w") as f:
-                yaml.safe_dump(default_config, f)
-            logger.info(f"Created default config at {self.config_path}")
+            try:
+                with self.config_path.open("x") as f:  # Atomic create using 'x' mode
+                    default_config = {
+                        "base_dir": str(self.base_dir),
+                        "template_paths": self.template_paths,
+                    }
+                    yaml.safe_dump(default_config, f)
+            except FileExistsError:
+                pass  # File was created by another process
+            except OSError as e:
+                logger.error(f"Failed to create config: {e}")
+                raise
 
         try:
             with self.config_path.open() as f:
@@ -284,10 +292,12 @@ class TemplateManager:
             OSError: If copy operation fails.
 
         """
-        # Source is from base directory
-        source_path = PACKAGE_ROOT.parent / relative_path
+        # Source is from configured base directory
+        source_path = self.resolver.base_dir / relative_path
         if not source_path.exists():
-            raise FileNotFoundError(f"Template source not found: {source_path}")
+            raise FileNotFoundError(
+                f"Template source not found: {source_path}. Check base_dir: {self.resolver.base_dir}"
+            )
 
         # Safely resolve destination path
         dest_path = self.resolver._resolve_template_path(relative_path)

@@ -83,3 +83,4 @@ uv.lock
 
 # Version
 version.py
+.aider*

@@ -2,6 +2,10 @@
 
 from pathlib import Path
 
+class SecurityError(Exception):
+    """Raised when a security violation is detected."""
+    pass
+
 # Base paths
 PACKAGE_ROOT = Path(__file__).parent
 CONFIG_DIR = PACKAGE_ROOT.parent / "config_templates"
