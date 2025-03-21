@@ -183,6 +183,11 @@ class ProjectCreator:
             if section not in self.config:
                 logger.error(f"Missing required section: {section}")
                 return False
+        
+        # Ensure the ai section exists with defaults if not present
+        if "ai" not in self.config:
+            self.config["ai"] = {"copilots": {}}
+        
         return True
 
     def _validate_project_type(self) -> bool:
@@ -266,10 +271,10 @@ class ProjectCreator:
             self.project_path = Path(output_dir)
 
             # Initialize GitHub repository if requested
-            if self.config["github"]["add_on_github"]:
+            if self.config.get("github", {}).get("add_on_github"):
                 if not self.create_github_repo():
                     return False
-            if self.config["ai"]["copilots"]:
+            if self.config.get("ai", {}).get("copilots"):
                 if not self.copy_ai_templates():
                     return False
             logger.info(f"Project created successfully at {self.project_path}")
@@ -346,24 +351,36 @@ class ProjectCreator:
             if not copilots_config:
                 return True
 
-            # Get the path to coding_rules.md template
-            rules_template = self.template_resolver.get_template_path("shared", "coding_rules.md")
+            # Try to get the path to coding_rules.md template
+            try:
+                rules_template = self.template_resolver.get_template_path("shared", "coding_rules.md")
+                # Skip the entire process if template file doesn't exist
+                if not rules_template.exists():
+                    logger.warning("Coding rules template not found, skipping AI rules creation")
+                    return True
+                
+                rules_content = rules_template.read_text()
+                
+                # Copy rules for cursor if configured
+                cursor_rules_path = copilots_config.get("cursor_rules_path")
+                if cursor_rules_path:
+                    rules_dir = self.project_path / cursor_rules_path
+                    rules_dir.parent.mkdir(parents=True, exist_ok=True)
+                    rules_dir.write_text(rules_content)
+                    logger.info(f"Copied coding rules to {cursor_rules_path}")
 
-            # Copy rules for cursor if configured
-            cursor_rules_path = copilots_config.get("cursor_rules_path")
-            if cursor_rules_path:
-                rules_dir = self.project_path / cursor_rules_path
-                rules_dir.parent.mkdir(parents=True, exist_ok=True)
-                rules_dir.write_text(rules_template.read_text())
-                logger.info(f"Copied coding rules to {cursor_rules_path}")
-
-            # Copy rules for cline if configured
-            cline_rules_path = copilots_config.get("cline_rules_path")
-            if cline_rules_path:
-                rules_file = self.project_path / cline_rules_path
-                rules_file.parent.mkdir(parents=True, exist_ok=True)
-                rules_file.write_text(rules_template.read_text())
-                logger.info(f"Copied coding rules to {cline_rules_path}")
+                # Copy rules for cline if configured
+                cline_rules_path = copilots_config.get("cline_rules_path")
+                if cline_rules_path:
+                    rules_file = self.project_path / cline_rules_path
+                    rules_file.parent.mkdir(parents=True, exist_ok=True)
+                    rules_file.write_text(rules_content)
+                    logger.info(f"Copied coding rules to {cline_rules_path}")
+                
+            except (ValueError, FileNotFoundError):
+                logger.warning("Could not find coding rules template, skipping AI rules creation")
+                # Don't create any rules files if template not found
+                return True
 
             return True
 
