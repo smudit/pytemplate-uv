@@ -269,7 +269,9 @@ class ProjectCreator:
             if self.config["github"]["add_on_github"]:
                 if not self.create_github_repo():
                     return False
-
+            if self.config["ai"]["copilots"]:
+                if not self.copy_ai_templates():
+                    return False
             logger.info(f"Project created successfully at {self.project_path}")
             return True
 
@@ -324,4 +326,47 @@ class ProjectCreator:
                 return True
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to run GitHub command: {e}")
+            return False
+
+    def copy_ai_templates(self) -> bool:
+        """Copy AI-related template files based on configuration.
+
+        Returns
+        -------
+            bool: True if copy operation was successful, False otherwise.
+
+        """
+        if not self.project_path:
+            logger.error("Project path not set")
+            return False
+
+        try:
+            ai_config = self.config.get("ai", {})
+            copilots_config = ai_config.get("copilots", {})
+            if not copilots_config:
+                return True
+
+            # Get the path to coding_rules.md template
+            rules_template = self.template_resolver.get_template_path("shared", "coding_rules.md")
+
+            # Copy rules for cursor if configured
+            cursor_rules_path = copilots_config.get("cursor_rules_path")
+            if cursor_rules_path:
+                rules_dir = self.project_path / cursor_rules_path
+                rules_dir.parent.mkdir(parents=True, exist_ok=True)
+                rules_dir.write_text(rules_template.read_text())
+                logger.info(f"Copied coding rules to {cursor_rules_path}")
+
+            # Copy rules for cline if configured
+            cline_rules_path = copilots_config.get("cline_rules_path")
+            if cline_rules_path:
+                rules_file = self.project_path / cline_rules_path
+                rules_file.parent.mkdir(parents=True, exist_ok=True)
+                rules_file.write_text(rules_template.read_text())
+                logger.info(f"Copied coding rules to {cline_rules_path}")
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to copy AI templates: {str(e)}")
             return False

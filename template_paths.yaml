@@ -9,6 +9,6 @@ templates:
   
   # Configuration templates
   config_templates:
-    lib: config_templates/lib.yaml.template
-    service: config_templates/service.yaml.template
-    workspace: config_templates/workspace.yaml.template
+    lib: templates/configs/lib.yaml.template
+    service: templates/configs/service.yaml.template
+    workspace: templates/configs/workspace.yaml.template

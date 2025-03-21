@@ -7,8 +7,6 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from rich.console import Console
-from rich.table import Table
 
 from .constants import CONFIG_DIR, DEFAULT_USER_CONFIG_DIR, ENV_BASE_DIR
 from .logger import logger
@@ -29,7 +27,6 @@ templates_app = typer.Typer(
 )
 
 app.add_typer(templates_app, name="templates")
-console = Console()
 
 
 @app.command()
@@ -55,7 +52,7 @@ def create_project_cli(
             "Are you sure you want to overwrite the existing project directory?"
         )
         if not confirm:
-            console.print("Operation cancelled.")
+            logger.info("Operation cancelled.")
             raise typer.Exit()
     create_project(project_name, template, no_input, force)
 
@@ -88,13 +85,13 @@ def create_project_from_config(
             "Are you sure you want to overwrite the existing project directory?"
         )
         if not confirm:
-            console.print("Operation cancelled.")
+            logger.info("Operation cancelled.")
             raise typer.Exit()
 
     creator = ProjectCreator(config_path, interactive)
     if not creator.create_project_from_config(force=force):
         raise typer.Exit(code=1)
-    console.print("Project creation completed")
+    logger.info("Project creation completed")
 
 
 def validate_project_type(project_type: str) -> None:
@@ -151,8 +148,8 @@ def init_templates(
 
         # Initialize directory structure
         resolver.init_template_structure()
-        console.print("[green]Template directory structure initialized successfully[/]")
-        console.print(f"Base directory: {resolver.base_dir}")
+        logger.info("Template directory structure initialized successfully")
+        logger.info(f"Base directory: {resolver.base_dir}")
 
     except Exception as e:
         logger.error(f"Failed to initialize template structure: {e}")
@@ -166,23 +163,24 @@ def list_templates() -> None:
         resolver = TemplateResolver()
         templates = resolver.config["template_paths"]["templates"]
 
-        table = Table()
-        table.add_column("Category")
-        table.add_column("Name")
-        table.add_column("Path")
+        # Create a simple text-based table for logging
+        logger.info("Available templates:")
+        logger.info("=" * 80)
+        logger.info(f"{'Category':<20} {'Name':<30} {'Path':<30}")
+        logger.info("-" * 80)
 
         for category, category_templates in templates.items():
             for name, path in category_templates.items():
                 if isinstance(path, dict):
                     # Handle nested templates
                     for subname, subpath in path.items():
-                        table.add_row(
-                            category, f"{name}/{subname}", str(resolver.base_dir / subpath)
-                        )
+                        full_path = str(resolver.base_dir / subpath)
+                        logger.info(f"{category:<20} {f'{name}/{subname}':<30} {full_path:<30}")
                 else:
-                    table.add_row(category, name, str(resolver.base_dir / path))
+                    full_path = str(resolver.base_dir / path)
+                    logger.info(f"{category:<20} {name:<30} {full_path:<30}")
 
-        console.print(table)
+        logger.info("=" * 80)
 
     except Exception as e:
         logger.error(f"Failed to list templates: {e}")
@@ -204,12 +202,12 @@ def copy_templates(
         manager = TemplateManager(resolver)
 
         if category:
-            console.print(f"[yellow]Copying templates for category: {category}[/]")
+            logger.info(f"Copying templates for category: {category}")
         else:
-            console.print("[yellow]Copying all templates[/]")
+            logger.info("Copying all templates")
 
         manager.copy_templates(category)
-        console.print("[green]Templates copied successfully[/]")
+        logger.info("Templates copied successfully")
 
     except Exception as e:
         logger.error(f"Failed to copy templates: {e}")

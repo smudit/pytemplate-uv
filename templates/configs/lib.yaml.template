@@ -1,7 +1,7 @@
 project:
-  name: my_workspace
-  description: A development workspace for multiple services
-  type: workspace
+  name: my_library
+  description: A Python library for doing amazing things
+  type: lib
   python_version: "3.12"
   author: "Your Name"
   email: "your.email@example.com"
@@ -9,23 +9,21 @@ project:
   license: "MIT"
 
 github:
-  repo_name: my-workspace
+  repo_name: my-library
   add_on_github: false
   github_username: "your-github-username"
   repo_private: true
 
 docker:
-  docker_image: true
-  docker_compose: true
+  docker_image: false
+  docker_compose: false
   use_existing_docker_image: null
 
 devcontainer:
-  add_devcontainer: true
+  add_devcontainer: false
 
 service_ports:
-  ports:
-    - 8000
-    - 8001
+  ports: []
 
 development:
   use_pytest: true
@@ -33,3 +31,9 @@ development:
   use_ruff: true
   use_mypy: true
   use_pre_commit: true
+
+ai:
+  copilots: 
+    - cursor
+    - cline
+  # supported_assistants: [cursor, cline]
