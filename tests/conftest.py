@@ -1,5 +1,6 @@
 """Pytest configuration and fixtures for pytemplate-uv."""
 
+import logging
 import os
 import shutil
 import tempfile
@@ -8,6 +9,34 @@ from pathlib import Path
 
 import pytest
 import yaml
+from loguru import logger
+
+
+class PropagateHandler(logging.Handler):
+    """A handler that routes Loguru messages to Python's standard logging."""
+
+    def emit(self, record):
+        # Use whatever logger name you want. Typically, Loguru logs have `record.name == 'loguru'`.
+        logging.getLogger(record.name).handle(record)
+
+
+# hook into pytest to propagate Loguru logs to Python's logging so that caplog can capture them
+@pytest.fixture(scope="session", autouse=True)
+def _setup_loguru_to_python_logging():
+    """Propagate Loguru logs to Python's logging so that caplog can capture them."""
+    # Remove any default Loguru sinks to avoid double or extra output
+    logger.remove()
+
+    # Add our custom handler
+    logger.add(PropagateHandler(), level="DEBUG")  # or "INFO", "ERROR", etc.
+
+    # Optionally configure the root logger level, etc.
+    logging.basicConfig(level=logging.DEBUG)
+
+    yield  # tests run here
+
+    # (Optional) remove the custom sink after tests
+    logger.remove()
 
 
 @pytest.fixture
@@ -271,6 +300,7 @@ def mock_cookiecutter(monkeypatch):
         """Create a simple directory structure for testing."""
         output_dir = kwargs.get("output_dir", ".")
         project_name = kwargs.get("extra_context", {}).get("project_name", "test-project")
+        extra_context = kwargs.get("extra_context", {})
 
         # Create output directory
         project_path = Path(output_dir) / project_name
@@ -283,7 +313,7 @@ def mock_cookiecutter(monkeypatch):
 
         # Create package directory with the same name
         package_name = project_name.replace("-", "_")
-        package_path = project_path / package_name
+        package_path = project_path / "src" / package_name
         package_path.mkdir(parents=True, exist_ok=True)
         (package_path / "__init__.py").write_text("")
         (package_path / "main.py").write_text("def main():\n    print('Hello World')\n")
@@ -293,6 +323,18 @@ def mock_cookiecutter(monkeypatch):
         test_path.mkdir(parents=True, exist_ok=True)
         (test_path / "__init__.py").write_text("")
         (test_path / "test_main.py").write_text("def test_main():\n    assert True\n")
+
+        # Create docs directory if sphinx is enabled
+        if extra_context.get("sphinx_docs") == "yes":
+            docs_path = project_path / "docs"
+            docs_path.mkdir(parents=True, exist_ok=True)
+            (docs_path / "conf.py").write_text("")
+            (docs_path / "index.rst").write_text("Welcome to documentation")
+
+        # Create CLI file if CLI is enabled
+        if extra_context.get("command_line_interface") != "no":
+            cli_path = package_path / "cli.py"
+            cli_path.write_text("import click\n\n@click.group()\ndef cli():\n    pass\n")
 
         return str(project_path)
 

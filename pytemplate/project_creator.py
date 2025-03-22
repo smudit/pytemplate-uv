@@ -195,6 +195,19 @@ class ProjectCreator:
         logger.debug("Project name validation successful")
         return True
 
+    def _validate_development_settings(self) -> bool:
+        """Validate development settings."""
+        dev_settings = self.config.get("development", {})
+        cli_interface = dev_settings.get("command_line_interface", "no")
+        valid_cli_options = ["no", "click", "argparse", "plain"]
+
+        if cli_interface not in valid_cli_options:
+            logger.error(f"Invalid command line interface option: {cli_interface}")
+            logger.error(f"Valid options are: {', '.join(valid_cli_options)}")
+            return False
+
+        return True
+
     def validate_config(self) -> bool:
         """Validate the configuration structure."""
         logger.debug("Starting configuration validation")
@@ -208,6 +221,9 @@ class ProjectCreator:
             return False
 
         if not self._validate_project_name():
+            return False
+
+        if not self._validate_development_settings():
             return False
 
         logger.debug("Configuration validation completed successfully")
@@ -264,15 +280,17 @@ class ProjectCreator:
             project_name = self.config["project"]["name"]
             logger.info(f"Creating {project_type} project: {project_name}")
 
-            # For library projects, first create the Python package structure
+            # For library projects, use the pylibrary template
             if project_type == "lib":
                 logger.info("Creating library project structure...")
                 template_path = self.template_resolver.get_template_path(
-                    "project_templates", "pyproject"
+                    "project_templates",
+                    "pylibrary",  # Changed from "pyproject" to "pylibrary"
                 )
                 context = {
                     "project_name": project_name,
                     **_get_context(),
+                    **self.config,  # Include all config settings
                 }
 
                 output_dir = _create_project_with_cookiecutter(

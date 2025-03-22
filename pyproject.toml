@@ -125,3 +125,4 @@ norecursedirs = [
     "dist",
     "node_modules"
 ]
+log_level = "ERROR"
