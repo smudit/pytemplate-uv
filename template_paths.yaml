@@ -1,14 +1,12 @@
 # Template paths configuration
 # All paths are relative to base_dir
 
-templates:
-  # Project structure templates
-  project_templates:
-    fastapi: templates/fastapi-template
-    pyproject: templates/pyproject-template
-  
-  # Configuration templates
-  config_templates:
-    lib: templates/configs/lib.yaml.template
-    service: templates/configs/service.yaml.template
-    workspace: templates/configs/workspace.yaml.template
+# Project structure templates
+project_templates:
+  pyproject: templates/pyproject-template
+
+# Configuration templates
+config_templates:
+  lib: templates/configs/lib.yaml.template
+  service: templates/configs/service.yaml.template
+  workspace: templates/configs/workspace.yaml.template

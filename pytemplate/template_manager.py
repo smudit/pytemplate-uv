@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-import os
-import shutil
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 from .constants import (
-    DEFAULT_USER_CONFIG_FILE,
-    ENV_BASE_DIR,
     TEMPLATE_PATHS_FILE,
 )
 from .logger import logger
@@ -30,8 +26,19 @@ class TemplateResolver:
     def _resolve_template_path(self, relative_path: str) -> Path:
         """Safely resolve template path relative to base directory."""
         try:
-            # Normalize the path by resolving any relative components
-            normalized_path = Path(relative_path).resolve()
+            # First join with base_dir, then resolve to handle any relative components
+            normalized_path = (self.base_dir / relative_path).resolve()
+
+            # Verify the resolved path is within base directory for security
+            if not self._is_safe_path(normalized_path, self.base_dir):
+                logger.warning(
+                    f"Path resolution warning: {normalized_path} is outside package directory {self.base_dir}"
+                )
+                # Fall back to package-relative path
+                normalized_path = (Path(__file__).resolve().parent.parent / relative_path).resolve()
+                logger.debug(f"Falling back to package-relative path: {normalized_path}")
+
+            logger.debug(f"Resolved '{relative_path}' to '{normalized_path}'")
             return normalized_path
         except FileNotFoundError:
             logger.error(f"Template path does not exist: {relative_path}")
@@ -45,23 +52,24 @@ class TemplateResolver:
             config_path (Optional[str]): Path to config file. If None, uses default locations.
 
         """
+        logger.debug(f"Initializing TemplateResolver with config_path: {config_path}")
         self.config_path = Path(config_path) if config_path else self._get_default_config_path()
         self.base_dir = self._get_base_dir()
+        logger.info(f"Using base directory: {self.base_dir}")
         self.template_paths = self._load_template_paths()
         self.config = self._load_config()
+        logger.debug("TemplateResolver initialization complete")
 
     def _get_default_config_path(self) -> Path:
         """Get default configuration path."""
-        return DEFAULT_USER_CONFIG_FILE
+        return TEMPLATE_PATHS_FILE
 
     def _get_base_dir(self) -> Path:
-        """Get base directory from environment variable or project root."""
-        base_dir = os.environ.get(ENV_BASE_DIR)
-        if base_dir:
-            return Path(base_dir).resolve()
-
-        # Use current working directory as default base directory
-        return Path.cwd().resolve()
+        """Get base directory - uses package directory."""
+        # Get the directory containing the package
+        package_dir = Path(__file__).resolve().parent.parent
+        logger.debug(f"Package directory resolved to: {package_dir}")
+        return package_dir
 
     def _load_template_paths(self) -> dict[str, Any]:
         """Load template paths from YAML file.
@@ -99,7 +107,9 @@ class TemplateResolver:
             yaml.YAMLError: If config file is invalid YAML.
 
         """
+        logger.debug(f"Loading config from: {self.config_path}")
         if not self.config_path.exists():
+            logger.info(f"Config file not found, creating default at: {self.config_path}")
             # Create default config
             try:
                 with self.config_path.open("x") as f:  # Atomic create using 'x' mode
@@ -117,6 +127,7 @@ class TemplateResolver:
         try:
             with self.config_path.open() as f:
                 config = yaml.safe_load(f)
+                logger.debug(f"Loaded config with {len(config)} entries")
             return config
         except yaml.YAMLError as e:
             logger.error(f"Error parsing config file: {e}")
@@ -140,8 +151,11 @@ class TemplateResolver:
                        or if resolved path is outside base directory.
 
         """
+        logger.debug(f"Resolving path for template: {template_type}/{template_name}")
         relative_path = self._get_relative_path(template_type, template_name)
-        return self._resolve_template_path(relative_path)
+        resolved_path = self._resolve_template_path(relative_path)
+        logger.debug(f"Resolved template path: {resolved_path}")
+        return resolved_path
 
     def _get_relative_path(self, template_type: str, template_name: str) -> str:
         """Get relative path from config.
@@ -161,14 +175,14 @@ class TemplateResolver:
 
         """
         try:
-            templates = self.config["template_paths"]["templates"]
-            if template_type not in templates:
-                available_types = ", ".join(templates.keys())
+            # Access template_type directly from the config structure
+            if template_type not in self.config:
+                available_types = ", ".join(self.config.keys())
                 raise ValueError(
                     f"Template type '{template_type}' not found. Available types: {available_types}"
                 )
 
-            template_group = templates[template_type]
+            template_group = self.config[template_type]
             if template_name not in template_group:
                 available_templates = ", ".join(template_group.keys())
                 raise ValueError(
@@ -193,8 +207,12 @@ class TemplateResolver:
 
         """
         try:
-            templates = self.config["template_paths"]["templates"]
-            for template_type, template_group in templates.items():
+            # Iterate through template types (e.g., project_templates, config_templates)
+            for template_type, template_group in self.config.items():
+                # Skip non-dict entries (like comments or metadata)
+                if not isinstance(template_group, dict):
+                    continue
+
                 for template_name, relative_path in template_group.items():
                     if isinstance(relative_path, dict):
                         # Handle nested templates (like dev_templates)
@@ -225,98 +243,5 @@ class TemplateManager:
             resolver (TemplateResolver): Template resolver instance.
 
         """
+        logger.debug("Initializing TemplateManager")
         self.resolver = resolver
-
-    def copy_templates(self, category: str | None = None) -> None:
-        """Copy templates to local directory.
-
-        Args:
-        ----
-            category (Optional[str]): Specific template category to copy.
-                                    If None, copies all templates.
-
-        """
-        try:
-            # First ensure directory structure exists
-            self.resolver.init_template_structure()
-
-            templates = self.resolver.config["template_paths"]["templates"]
-            if category:
-                if category not in templates:
-                    raise ValueError(f"Template category '{category}' not found")
-                self._copy_category(category, templates[category])
-            else:
-                # Copy all categories
-                for cat_name, cat_templates in templates.items():
-                    self._copy_category(cat_name, cat_templates)
-
-        except Exception as e:
-            logger.error(f"Failed to copy templates: {e}")
-            raise
-
-    def _copy_category(self, category: str, templates: dict[str, Any]) -> None:
-        """Copy templates for a specific category.
-
-        Args:
-        ----
-            category (str): Category name.
-            templates (Dict[str, Any]): Template configuration for the category.
-
-        """
-        logger.info(f"Copying {category} templates...")
-
-        for template_name, relative_path in templates.items():
-            if isinstance(relative_path, dict):
-                # Handle nested templates
-                for nested_name, nested_path in relative_path.items():
-                    self._copy_template(category, f"{template_name}/{nested_name}", nested_path)
-            else:
-                self._copy_template(category, template_name, relative_path)
-
-    def _copy_template(self, category: str, template_name: str, relative_path: str) -> None:
-        """Copy a single template.
-
-        Args:
-        ----
-            category (str): Template category.
-            template_name (str): Template name.
-            relative_path (str): Relative path to the template.
-
-        Raises:
-        ------
-            ValueError: If destination path is outside base directory.
-            FileNotFoundError: If source template doesn't exist.
-            OSError: If copy operation fails.
-
-        """
-        # Source is from configured base directory
-        source_path = self.resolver.base_dir / relative_path
-        if not source_path.exists():
-            raise FileNotFoundError(
-                f"Template source not found: {source_path}. Check base_dir: {self.resolver.base_dir}"
-            )
-
-        # Safely resolve destination path
-        dest_path = self.resolver._resolve_template_path(relative_path)
-
-        try:
-            if source_path.is_dir():
-                if dest_path.exists():
-                    # Validate path before destructive operation
-                    if not self.resolver._is_safe_path(dest_path, self.resolver.base_dir):
-                        raise ValueError(f"Cannot delete directory outside base: {dest_path}")
-                    shutil.rmtree(dest_path)
-                shutil.copytree(source_path, dest_path)
-            else:
-                if dest_path.exists():
-                    # Validate path before destructive operation
-                    if not self.resolver._is_safe_path(dest_path, self.resolver.base_dir):
-                        raise ValueError(f"Cannot delete file outside base: {dest_path}")
-                    dest_path.unlink()
-                shutil.copy2(source_path, dest_path)
-
-            logger.info(f"Copied {category}/{template_name} to {dest_path}")
-
-        except (OSError, shutil.Error) as e:
-            logger.error(f"Failed to copy template {template_name}: {e}")
-            raise OSError(f"Failed to copy template {template_name}: {e}") from e
