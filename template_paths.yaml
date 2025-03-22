@@ -4,6 +4,7 @@
 # Project structure templates
 project_templates:
   pyproject: templates/pyproject-template
+  pylibrary: gh:ionelmc/cookiecutter-pylibrary
 
 # Configuration templates
 config_templates:

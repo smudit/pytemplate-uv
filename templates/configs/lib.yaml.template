@@ -22,15 +22,43 @@ docker:
 devcontainer:
   add_devcontainer: false
 
-service_ports:
-  ports: []
-
 development:
+  # Testing
   use_pytest: true
+  test_matrix_separate_coverage: false
+  test_matrix_configurator: false
+  
+  # Documentation
+  use_sphinx: true
+  sphinx_theme: "sphinx-rtd-theme"
+  sphinx_doctest: false
+  sphinx_docs_hosting: "readthedocs.io"
+  
+  # Code Quality
   use_black: true
   use_ruff: true
   use_mypy: true
   use_pre_commit: true
+  
+  # Coverage
+  use_codecov: true
+  use_coveralls: false
+  
+  # Code Analysis
+  use_scrutinizer: false
+  use_codacy: false
+  use_codeclimate: false
+  
+  # CLI
+  command_line_interface: "no"  # Options: "no", "plain", "argparse", "click"
+  command_line_bin_name: ""  # Only used if command_line_interface is not "no"
+  
+  # PyPI
+  pypi_badge: true
+  pypi_disable_upload: false
+
+service_ports:
+  ports: []
 
 ai:
   copilots: 

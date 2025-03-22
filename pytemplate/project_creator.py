@@ -69,47 +69,63 @@ def _get_context() -> dict[str, str]:
 
 
 def _create_project_with_cookiecutter(
-    template_path: Path, context: dict, no_input: bool, overwrite: bool
+    template_path: Path,
+    context: dict,
+    no_input: bool,
+    overwrite: bool,
+    template_resolver: TemplateResolver,
 ) -> str:
     logger.debug(f"Creating project with cookiecutter from template: {template_path}")
-    logger.debug(f"Context: {context}, no_input: {no_input}, overwrite: {overwrite}")
+
+    if context.get("project", {}).get("type") == "lib":
+        # Get the library template path from config
+        lib_template = template_resolver.get_template_path("project_templates", "pylibrary")
+        dev_settings = context.get("development", {})
+        cookiecutter_context = {
+            # Project settings
+            "project_name": context["project"]["name"],
+            "package_name": context["project"]["name"].replace("-", "_"),
+            "full_name": context["project"].get("author", "your name"),
+            "email": context["project"].get("email", "your.email@example.com"),
+            "github_username": context["github"].get("github_username", "your-github-username"),
+            "version": context["project"].get("version", "0.1.0"),
+            "license": context["project"].get("license", "MIT"),
+            # Development settings mapped from lib.yaml.template
+            "test_runner": "pytest" if dev_settings.get("use_pytest", True) else "nose",
+            "test_matrix_separate_coverage": dev_settings.get(
+                "test_matrix_separate_coverage", False
+            ),
+            "test_matrix_configurator": dev_settings.get("test_matrix_configurator", False),
+            "sphinx_docs": "yes" if dev_settings.get("use_sphinx", True) else "no",
+            "sphinx_theme": dev_settings.get("sphinx_theme", "sphinx-rtd-theme"),
+            "sphinx_doctest": "yes" if dev_settings.get("sphinx_doctest", False) else "no",
+            "sphinx_docs_hosting": dev_settings.get("sphinx_docs_hosting", "readthedocs.io"),
+            "codecov": "yes" if dev_settings.get("use_codecov", True) else "no",
+            "coveralls": "yes" if dev_settings.get("use_coveralls", False) else "no",
+            "scrutinizer": "yes" if dev_settings.get("use_scrutinizer", False) else "no",
+            "codacy": "yes" if dev_settings.get("use_codacy", False) else "no",
+            "codeclimate": "yes" if dev_settings.get("use_codeclimate", False) else "no",
+            "command_line_interface": dev_settings.get("command_line_interface", "no"),
+            "command_line_interface_bin_name": dev_settings.get("command_line_bin_name", ""),
+            "pypi_badge": "yes" if dev_settings.get("pypi_badge", True) else "no",
+            "pypi_disable_upload": "yes"
+            if dev_settings.get("pypi_disable_upload", False)
+            else "no",
+        }
+
+        return cookiecutter(
+            str(lib_template),
+            no_input=no_input,
+            extra_context=cookiecutter_context,
+            overwrite_if_exists=overwrite,
+        )
+
     return cookiecutter(
         str(template_path),
         no_input=no_input,
         extra_context=context,
         overwrite_if_exists=overwrite,
     )
-
-
-def create_project(
-    project_name: str | None = None,
-    template: str = "pyproject",
-    no_input: bool = False,
-    force: bool = False,
-) -> None:
-    """Create a new project from a specified template."""
-    logger.info(f"Creating new project with template: {template}")
-    if project_name:
-        logger.info(f"Project name: {project_name}")
-    resolver = TemplateResolver()
-    template_path = _validate_template(template, resolver)
-    context = _get_context()
-    if project_name:
-        context["project_name"] = project_name
-
-    try:
-        # Use cookiecutter directly instead of subprocess
-        output_dir = _create_project_with_cookiecutter(template_path, context, no_input, force)
-
-        if project_name:
-            full_path = Path(output_dir).resolve()
-            logger.info(f"Project created successfully at {full_path}")
-        else:
-            logger.info("Project created successfully!")
-
-    except Exception as e:
-        logger.error(f"Project creation failed: {str(e)}")
-        raise typer.Exit(code=1)
 
 
 class ProjectCreator:
@@ -260,7 +276,7 @@ class ProjectCreator:
                 }
 
                 output_dir = _create_project_with_cookiecutter(
-                    template_path, context, not self.interactive, force
+                    template_path, context, not self.interactive, force, self.template_resolver
                 )
 
                 self.project_path = Path(output_dir)
@@ -295,7 +311,7 @@ class ProjectCreator:
 
             # Add non-package addons using cookiecutter
             output_dir = _create_project_with_cookiecutter(
-                template_path, context, not self.interactive, force
+                template_path, context, not self.interactive, force, self.template_resolver
             )
 
             self.project_path = Path(output_dir)
