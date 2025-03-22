@@ -77,49 +77,66 @@ def _create_project_with_cookiecutter(
 ) -> str:
     logger.debug(f"Creating project with cookiecutter from template: {template_path}")
 
-    if context.get("project", {}).get("type") == "lib":
-        # Get the library template path from config
-        lib_template = template_resolver.get_template_path("project_templates", "pylibrary")
-        dev_settings = context.get("development", {})
-        cookiecutter_context = {
-            # Project settings
-            "project_name": context["project"]["name"],
-            "package_name": context["project"]["name"].replace("-", "_"),
-            "full_name": context["project"].get("author", "your name"),
-            "email": context["project"].get("email", "your.email@example.com"),
-            "github_username": context["github"].get("github_username", "your-github-username"),
-            "version": context["project"].get("version", "0.1.0"),
-            "license": context["project"].get("license", "MIT"),
-            # Development settings mapped from lib.yaml.template
-            "test_runner": "pytest" if dev_settings.get("use_pytest", True) else "nose",
-            "test_matrix_separate_coverage": dev_settings.get(
-                "test_matrix_separate_coverage", False
-            ),
-            "test_matrix_configurator": dev_settings.get("test_matrix_configurator", False),
-            "sphinx_docs": "yes" if dev_settings.get("use_sphinx", True) else "no",
-            "sphinx_theme": dev_settings.get("sphinx_theme", "sphinx-rtd-theme"),
-            "sphinx_doctest": "yes" if dev_settings.get("sphinx_doctest", False) else "no",
-            "sphinx_docs_hosting": dev_settings.get("sphinx_docs_hosting", "readthedocs.io"),
-            "codecov": "yes" if dev_settings.get("use_codecov", True) else "no",
-            "coveralls": "yes" if dev_settings.get("use_coveralls", False) else "no",
-            "scrutinizer": "yes" if dev_settings.get("use_scrutinizer", False) else "no",
-            "codacy": "yes" if dev_settings.get("use_codacy", False) else "no",
-            "codeclimate": "yes" if dev_settings.get("use_codeclimate", False) else "no",
-            "command_line_interface": dev_settings.get("command_line_interface", "no"),
-            "command_line_interface_bin_name": dev_settings.get("command_line_bin_name", ""),
-            "pypi_badge": "yes" if dev_settings.get("pypi_badge", True) else "no",
-            "pypi_disable_upload": "yes"
-            if dev_settings.get("pypi_disable_upload", False)
-            else "no",
-        }
+    try:
+        if context.get("project", {}).get("type") == "lib":
+            # Get the library template path from config
+            lib_template = template_resolver.get_template_path("project_templates", "pylibrary")
+            dev_settings = context.get("development", {})
+            cookiecutter_context = {
+                # Project settings
+                "project_name": context["project"]["name"],
+                "package_name": context["project"]["name"].replace("-", "_"),
+                "full_name": context["project"].get("author", "your name"),
+                "email": context["project"].get("email", "your.email@example.com"),
+                "github_username": context["github"].get("github_username", "your-github-username"),
+                "version": context["project"].get("version", "0.1.0"),
+                "license": context["project"].get("license", "MIT"),
+                # Development settings mapped from lib.yaml.template
+                "test_runner": "pytest" if dev_settings.get("use_pytest", True) else "nose",
+                "test_matrix_separate_coverage": dev_settings.get(
+                    "test_matrix_separate_coverage", False
+                ),
+                "test_matrix_configurator": dev_settings.get("test_matrix_configurator", False),
+                "sphinx_docs": "yes" if dev_settings.get("use_sphinx", True) else "no",
+                "sphinx_theme": dev_settings.get("sphinx_theme", "sphinx-rtd-theme"),
+                "sphinx_doctest": "yes" if dev_settings.get("sphinx_doctest", False) else "no",
+                "sphinx_docs_hosting": dev_settings.get("sphinx_docs_hosting", "readthedocs.io"),
+                "codecov": "yes" if dev_settings.get("use_codecov", True) else "no",
+                "coveralls": "yes" if dev_settings.get("use_coveralls", False) else "no",
+                "scrutinizer": "yes" if dev_settings.get("use_scrutinizer", False) else "no",
+                "codacy": "yes" if dev_settings.get("use_codacy", False) else "no",
+                "codeclimate": "yes" if dev_settings.get("use_codeclimate", False) else "no",
+                "command_line_interface": dev_settings.get("command_line_interface", "no"),
+                "command_line_interface_bin_name": dev_settings.get("command_line_bin_name", ""),
+                "pypi_badge": "yes" if dev_settings.get("pypi_badge", True) else "no",
+                "pypi_disable_upload": "yes"
+                if dev_settings.get("pypi_disable_upload", False)
+                else "no",
+            }
 
-        return cookiecutter(
-            str(lib_template),
-            no_input=no_input,
-            extra_context=cookiecutter_context,
-            overwrite_if_exists=overwrite,
-        )
+            return _execute_cookiecutter(lib_template, no_input, cookiecutter_context, overwrite)
 
+        return _execute_cookiecutter(template_path, no_input, context, overwrite)
+    except Exception as e:
+        if "already exists" in str(e):
+            logger.warning("Directory already exists")
+            if typer.confirm(
+                "\nDirectory already exists. Do you want to overwrite?", default=False
+            ):
+                logger.info("User confirmed overwrite, retrying...")
+                if context.get("project", {}).get("type") == "lib":
+                    return _execute_cookiecutter(lib_template, no_input, cookiecutter_context, True)
+                return _execute_cookiecutter(template_path, no_input, context, True)
+            else:
+                logger.info("User chose not to overwrite. Exiting.")
+                raise typer.Exit(1)
+        raise
+
+
+def _execute_cookiecutter(
+    template_path: Path, no_input: bool, context: dict, overwrite: bool
+) -> str:
+    """Helper function to execute cookiecutter with consistent parameters."""
     return cookiecutter(
         str(template_path),
         no_input=no_input,
@@ -313,6 +330,8 @@ class ProjectCreator:
                 "project_name": project_name,
                 "project_type": project_type,
                 "description": self.config["project"].get("description", ""),
+                "author": self.config["project"].get("author", ""),
+                "email": self.config["project"].get("email", ""),
                 "version": self.config.get("version", "0.1.0"),
                 "python_version": self.config["project"].get("python_version", "3.11"),
                 "github": self.config["github"],
@@ -425,9 +444,7 @@ class ProjectCreator:
 
             # Try to get the path to coding_rules.md template
             try:
-                rules_template = self.template_resolver.get_template_path(
-                    "shared", "coding_rules.md"
-                )
+                rules_template = self.template_resolver.get_template_path("shared", "coding_rules")
                 logger.debug(f"Found coding rules template at: {rules_template}")
 
                 # Skip the entire process if template file doesn't exist

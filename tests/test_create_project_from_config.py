@@ -81,3 +81,39 @@ def test_create_project_from_config_invalid_path(temp_project_dir: Path) -> None
         mock_logger.error.assert_called_with(
             f"Config file not found: [Errno 2] No such file or directory: '{invalid_path}'"
         )
+
+
+def test_create_project_from_config_existing_directory(
+    temp_project_dir: Path, sample_lib_config: Path
+) -> None:
+    """Test project creation when directory already exists.
+
+    Verifies that:
+    - User is prompted when directory exists
+    - Project is created when user confirms overwrite
+    - Project is not created when user declines overwrite
+    """
+    # First create a project to ensure directory exists
+    runner.invoke(app, ["create-project-from-config", str(sample_lib_config)])
+
+    # Test when user confirms overwrite
+    result_yes = runner.invoke(
+        app,
+        ["create-project-from-config", str(sample_lib_config)],
+        input="y\n",  # Simulate user entering 'y' for yes
+    )
+
+    assert result_yes.exit_code == 0, "Command should succeed when user confirms overwrite"
+    assert "Directory already exists. Do you want to overwrite?" in result_yes.output
+    assert Path(temp_project_dir).exists()
+
+    # Test when user declines overwrite
+    result_no = runner.invoke(
+        app,
+        ["create-project-from-config", str(sample_lib_config)],
+        input="n\n",  # Simulate user entering 'n' for no
+    )
+
+    assert result_no.exit_code == 1, "Command should exit with code 1 when user declines overwrite"
+    assert "Directory already exists. Do you want to overwrite?" in result_no.output
+    assert "User chose not to overwrite. Exiting." in result_no.output

@@ -11,3 +11,7 @@ config_templates:
   lib: templates/configs/lib.yaml.template
   service: templates/configs/service.yaml.template
   workspace: templates/configs/workspace.yaml.template
+
+# Shared templates between projects
+shared:
+  coding_rules: templates/shared/coding_rules.md

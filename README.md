@@ -179,3 +179,8 @@ Leo Liu - [GitHub](https://github.com/yuxuzi)
 ---
 
 *Simplifying Python project creation with modern best practices* 🐍✨
+
+
+# TODO
+
+- [ ] use gh:arthurhenrique/cookiecutter-fastapi for fastapi template
