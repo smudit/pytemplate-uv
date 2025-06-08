@@ -104,6 +104,14 @@ class TemplateResolver:
 
         """
         logger.debug(f"Loading config from: {self.config_path}")
+
+        # If config_path is the same as TEMPLATE_PATHS_FILE, use template_paths directly
+        if self.config_path == TEMPLATE_PATHS_FILE:
+            logger.debug(
+                "Config path is same as template paths file, using template_paths directly"
+            )
+            return self.template_paths
+
         if not self.config_path.exists():
             logger.info(f"Config file not found, creating default at: {self.config_path}")
             # Create default config
@@ -186,7 +194,16 @@ class TemplateResolver:
                     f"Available templates: {available_templates}"
                 )
 
-            return template_group[template_name]
+            template_path = template_group[template_name]
+
+            # Check if the template path is a nested structure (dict)
+            if isinstance(template_path, dict):
+                raise ValueError(
+                    f"Template '{template_name}' in '{template_type}' is a nested structure. "
+                    f"Direct access to nested templates is not supported."
+                )
+
+            return template_path
         except KeyError as e:
             logger.error(f"Invalid config structure: {e}")
             raise ValueError(f"Invalid config structure: missing key {e}") from e

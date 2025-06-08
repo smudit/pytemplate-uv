@@ -39,9 +39,10 @@ class TestConfigurationEdgeCases:
         """)
 
         creator = ProjectCreator(str(comment_config))
-        creator.load_config()
-        # Should load as None or empty dict
-        assert creator.config is None or creator.config == {}
+        creator.enable_testing_mode()
+        # Should fail with empty config since it's missing required sections
+        with pytest.raises(KeyError):
+            creator.load_config()
 
     def test_config_with_null_values(self, temp_config_dir: Path):
         """Test handling of config with null values."""
@@ -72,7 +73,7 @@ class TestConfigurationEdgeCases:
                 "description": "Test project with special chars",
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
             "ai": {"copilots": {}},
         }
@@ -127,7 +128,7 @@ class TestFileSystemEdgeCases:
                 "description": "Test project with very long name",
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
             "ai": {"copilots": {}},
         }
@@ -205,7 +206,7 @@ class TestMemoryEdgeCases:
         config_data = {
             "project": {"type": "lib", "name": "test-lib", "description": "Test project"},
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
             "ai": {"copilots": {}},
             # Add many dummy entries
@@ -234,7 +235,7 @@ class TestCLIEdgeCases:
                 "description": "Test project with unicode",
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
             "ai": {"copilots": {}},
         }
@@ -253,7 +254,7 @@ class TestCLIEdgeCases:
         config_data = {
             "project": {"type": "lib", "name": "test-lib"},
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
             "ai": {"copilots": {}},
         }

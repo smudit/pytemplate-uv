@@ -264,7 +264,7 @@ def mock_template_config(temp_templates_dir: Path) -> Path:
     # Create the configs directory and template files
     configs_dir = temp_templates_dir / "configs"
     configs_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Create mock config template files
     for project_type in ["lib", "service", "workspace"]:
         template_file = configs_dir / f"{project_type}.yaml.template"
@@ -293,7 +293,9 @@ ai:
     config = {
         "project_templates": {
             "pyproject": str(temp_templates_dir / "pyproject-template"),
-            "pylibrary": str(temp_templates_dir / "pyproject-template"),  # Use local template for testing
+            "pylibrary": str(
+                temp_templates_dir / "pyproject-template"
+            ),  # Use local template for testing
         },
         "config_templates": {
             "lib": str(configs_dir / "lib.yaml.template"),
@@ -323,7 +325,7 @@ def setup_environment(temp_project_dir: str, mock_template_config: Path, monkeyp
     """
     os.environ["TEMPLATE_CONFIG_PATH"] = str(mock_template_config)
     os.environ["PROJECT_BASE_DIR"] = temp_project_dir
-    
+
     # Mock the TEMPLATE_PATHS_FILE constant to use our mock config
     monkeypatch.setattr("pytemplate.constants.TEMPLATE_PATHS_FILE", mock_template_config)
     monkeypatch.setattr("pytemplate.template_manager.TEMPLATE_PATHS_FILE", mock_template_config)
@@ -349,6 +351,11 @@ def mock_cookiecutter(monkeypatch):
             f'[project]\nname = "{project_name}"\nversion = "0.1.0"\n'
         )
 
+        # Create README.md file
+        (project_path / "README.md").write_text(
+            f"# {project_name}\n\n{extra_context.get('description', 'A Python project')}\n"
+        )
+
         # Create package directory with the same name
         package_name = project_name.replace("-", "_")
         package_path = project_path / "src" / package_name
@@ -363,16 +370,46 @@ def mock_cookiecutter(monkeypatch):
         (test_path / "test_main.py").write_text("def test_main():\n    assert True\n")
 
         # Create docs directory if sphinx is enabled
-        if extra_context.get("sphinx_docs") == "yes":
+        development_config = extra_context.get("development", {})
+        if extra_context.get("sphinx_docs") == "yes" or (
+            isinstance(development_config, dict) and development_config.get("use_sphinx")
+        ):
             docs_path = project_path / "docs"
             docs_path.mkdir(parents=True, exist_ok=True)
             (docs_path / "conf.py").write_text("")
             (docs_path / "index.rst").write_text("Welcome to documentation")
 
         # Create CLI file if CLI is enabled
-        if extra_context.get("command_line_interface") != "no":
+        cli_interface = extra_context.get("command_line_interface")
+        if cli_interface and cli_interface != "no":
             cli_path = package_path / "cli.py"
             cli_path.write_text("import click\n\n@click.group()\ndef cli():\n    pass\n")
+        elif isinstance(development_config, dict):
+            dev_cli = development_config.get("command_line_interface", "no")
+            if dev_cli and dev_cli != "no":
+                cli_path = package_path / "cli.py"
+                cli_path.write_text("import click\n\n@click.group()\ndef cli():\n    pass\n")
+
+        # Create Docker files if docker is enabled
+        docker_config = extra_context.get("docker", {})
+        if isinstance(docker_config, dict):
+            if docker_config.get("docker_image"):
+                (project_path / "Dockerfile").write_text(
+                    "FROM python:3.11-slim\nWORKDIR /app\nCOPY . .\nRUN pip install .\nCMD ['python', '-m', 'package']\n"
+                )
+            if docker_config.get("docker_compose"):
+                (project_path / "docker-compose.yml").write_text(
+                    "version: '3.8'\nservices:\n  app:\n    build: .\n    ports:\n      - '8000:8000'\n"
+                )
+
+        # Create devcontainer files if enabled
+        devcontainer_config = extra_context.get("devcontainer", {})
+        if isinstance(devcontainer_config, dict) and devcontainer_config.get("enabled"):
+            devcontainer_dir = project_path / ".devcontainer"
+            devcontainer_dir.mkdir(parents=True, exist_ok=True)
+            (devcontainer_dir / "devcontainer.json").write_text(
+                '{\n  "name": "Python 3",\n  "image": "mcr.microsoft.com/devcontainers/python:3.11"\n}\n'
+            )
 
         return str(project_path)
 
@@ -433,6 +470,46 @@ def sample_service_config(temp_config_dir: Path) -> Path:
     }
 
     config_path = temp_config_dir / "service_config.yaml"
+    with open(config_path, "w") as f:
+        yaml.dump(config, f)
+
+    return config_path
+
+
+@pytest.fixture
+def sample_workspace_config(temp_config_dir: Path) -> Path:
+    """Create a sample workspace configuration file.
+
+    Args:
+    ----
+        temp_config_dir: Temporary directory for config files
+
+    Returns:
+    -------
+        Path: Path to the sample config file
+
+    """
+    config = {
+        "project": {
+            "type": "workspace",
+            "name": "test-workspace",
+            "description": "Test workspace project",
+            "python_version": "3.11",
+            "author": "Test Author",
+            "email": "test@example.com",
+        },
+        "github": {"add_on_github": True, "repo_name": "test-workspace", "repo_private": False},
+        "docker": {"docker_image": False, "docker_compose": False},
+        "devcontainer": {"enabled": True},
+        "ai": {
+            "copilots": {
+                "cursor_rules_path": ".cursor/rules/coding_rules.md",
+                "cline_rules_path": ".clinerules",
+            }
+        },
+    }
+
+    config_path = temp_config_dir / "workspace_config.yaml"
     with open(config_path, "w") as f:
         yaml.dump(config, f)
 

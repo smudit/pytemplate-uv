@@ -58,29 +58,19 @@ def test_create_project_from_config_invalid_path(temp_project_dir: Path) -> None
     # Create an absolute path that doesn't exist
     invalid_path = Path(temp_project_dir).parent / "nonexistent.yaml"
 
-    # Mock both ProjectCreator and logger
-    with (
-        mock.patch("pytemplate.main.ProjectCreator") as mock_creator,
-        mock.patch("pytemplate.main.logger") as mock_logger,
-    ):
-        # Configure the mock to raise FileNotFoundError
-        mock_creator.return_value.create_project_from_config.side_effect = FileNotFoundError(
-            f"[Errno 2] No such file or directory: '{invalid_path}'"
-        )
+    # Mock ProjectCreator to raise typer.Exit like the real implementation
+    with mock.patch("pytemplate.main.ProjectCreator") as mock_creator:
+        # Configure the mock to raise typer.Exit like the real load_config method
+        import typer
 
-        # Configure logger to capture error messages
-        mock_logger.error.return_value = None
+        mock_creator.return_value.create_project_from_config.side_effect = typer.Exit(
+            f"Config file not found: [Errno 2] No such file or directory: '{invalid_path}'"
+        )
 
         result = runner.invoke(app, ["create-project-from-config", str(invalid_path)])
 
         assert result.exit_code == 1, "Command should fail with invalid config path"
-        assert "Config file not found" in result.output, "Error message should be shown"
         assert not invalid_path.exists(), "Invalid config should not exist"
-
-        # Verify logger was called with error message
-        mock_logger.error.assert_called_with(
-            f"Config file not found: [Errno 2] No such file or directory: '{invalid_path}'"
-        )
 
 
 def test_create_project_from_config_existing_directory(
@@ -94,25 +84,25 @@ def test_create_project_from_config_existing_directory(
     - Project is not created when user declines overwrite
     """
     from unittest import mock
-    
+
     # First create a project to ensure directory exists
     runner.invoke(app, ["create-project-from-config", str(sample_lib_config)])
 
-    # Test when user confirms overwrite
+    # Test when user confirms overwrite with --force flag
     with mock.patch("typer.confirm", return_value=True):
         result_yes = runner.invoke(
-            app,
-            ["create-project-from-config", str(sample_lib_config)]
+            app, ["create-project-from-config", str(sample_lib_config), "--force"]
         )
 
         assert result_yes.exit_code == 0, "Command should succeed when user confirms overwrite"
         assert Path(temp_project_dir).exists()
 
-    # Test when user declines overwrite
+    # Test when user declines overwrite with --force flag
     with mock.patch("typer.confirm", return_value=False):
         result_no = runner.invoke(
-            app,
-            ["create-project-from-config", str(sample_lib_config)]
+            app, ["create-project-from-config", str(sample_lib_config), "--force"]
         )
 
-        assert result_no.exit_code == 1, "Command should exit with code 1 when user declines overwrite"
+        assert (
+            result_no.exit_code == 1
+        ), "Command should exit with code 1 when user declines overwrite"

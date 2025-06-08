@@ -56,6 +56,7 @@ def create_project_from_config(
     if not creator.create_project_from_config(force=force):
         raise typer.Exit(code=1)
     logger.info("Project creation completed")
+    typer.echo("Project creation completed")
 
 
 def validate_project_type(project_type: str) -> None:
@@ -95,7 +96,9 @@ def create_config(
                 raise typer.Exit(code=1) from None
 
         except ValueError as ve:
-            logger.error(f"Configuration template not found in template_paths.yaml: {ve}")
+            error_msg = f"Configuration template not found in template_paths.yaml: {ve}"
+            logger.error(error_msg)
+            typer.echo(error_msg, err=True)
             raise typer.Exit(code=1) from ve
 
     except Exception as e:

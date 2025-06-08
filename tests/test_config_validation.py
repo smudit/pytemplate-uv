@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest import mock
 
 import pytest
 import yaml
@@ -26,20 +25,20 @@ class TestProjectConfigValidation:
                 "author": "Test Author",
                 "email": "test@example.com",
                 "version": "0.1.0",
-                "license": "MIT"
+                "license": "MIT",
             },
             "github": {"add_on_github": False},
             "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}}
+            "ai": {"copilots": {}},
         }
-        
+
         with open(valid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(valid_config))
         creator.load_config()
-        
+
         # Should load without errors
         assert creator.config["project"]["type"] == "lib"
         assert creator.config["project"]["name"] == "test-project"
@@ -50,22 +49,22 @@ class TestProjectConfigValidation:
         config_data = {
             "project": {
                 "name": "test-project",
-                "description": "A test project"
+                "description": "A test project",
                 # Missing "type" field
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}}
+            "ai": {"copilots": {}},
         }
-        
+
         with open(invalid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(invalid_config))
+        creator.enable_testing_mode()
         with pytest.raises(KeyError):
             creator.load_config()
-            creator.create_project_from_config()
 
     def test_missing_project_name(self, temp_config_dir: Path):
         """Test validation when project name is missing."""
@@ -73,22 +72,22 @@ class TestProjectConfigValidation:
         config_data = {
             "project": {
                 "type": "lib",
-                "description": "A test project"
+                "description": "A test project",
                 # Missing "name" field
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}}
+            "ai": {"copilots": {}},
         }
-        
+
         with open(invalid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(invalid_config))
+        creator.enable_testing_mode()
         with pytest.raises(KeyError):
             creator.load_config()
-            creator.create_project_from_config()
 
     def test_invalid_project_type(self, temp_config_dir: Path):
         """Test validation with invalid project type."""
@@ -97,17 +96,17 @@ class TestProjectConfigValidation:
             "project": {
                 "type": "invalid_type",  # Invalid type
                 "name": "test-project",
-                "description": "A test project"
+                "description": "A test project",
             },
             "github": {"add_on_github": False},
             "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}}
+            "ai": {"copilots": {}},
         }
-        
+
         with open(invalid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(invalid_config))
         # Should fail during project creation due to invalid type
         result = creator.create_project_from_config()
@@ -120,17 +119,17 @@ class TestProjectConfigValidation:
             "project": {
                 "type": "lib",
                 "name": "",  # Empty name
-                "description": "A test project"
+                "description": "A test project",
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}}
+            "ai": {"copilots": {}},
         }
-        
+
         with open(invalid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(invalid_config))
         # Should handle empty project name appropriately
         result = creator.create_project_from_config()
@@ -144,28 +143,24 @@ class TestGitHubConfigValidation:
         """Test validation of valid GitHub configuration."""
         valid_config = temp_config_dir / "valid_github.yaml"
         config_data = {
-            "project": {
-                "type": "service",
-                "name": "test-service",
-                "description": "A test service"
-            },
+            "project": {"type": "service", "name": "test-service", "description": "A test service"},
             "github": {
                 "add_on_github": True,
                 "repo_name": "test-service",
                 "repo_private": False,
-                "github_username": "testuser"
+                "github_username": "testuser",
             },
             "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}}
+            "ai": {"copilots": {}},
         }
-        
+
         with open(valid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(valid_config))
         creator.load_config()
-        
+
         assert creator.config["github"]["add_on_github"] is True
         assert creator.config["github"]["repo_name"] == "test-service"
 
@@ -173,17 +168,13 @@ class TestGitHubConfigValidation:
         """Test handling when GitHub section is missing."""
         config_without_github = temp_config_dir / "no_github.yaml"
         config_data = {
-            "project": {
-                "type": "lib",
-                "name": "test-lib",
-                "description": "A test library"
-            }
+            "project": {"type": "lib", "name": "test-lib", "description": "A test library"}
             # Missing github section
         }
-        
+
         with open(config_without_github, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(config_without_github))
         # Should handle missing GitHub section gracefully
         result = creator.create_project_from_config()
@@ -193,24 +184,21 @@ class TestGitHubConfigValidation:
         """Test validation with invalid boolean values in GitHub config."""
         invalid_config = temp_config_dir / "invalid_github_bool.yaml"
         config_data = {
-            "project": {
-                "type": "lib",
-                "name": "test-lib",
-                "description": "A test library"
-            },
+            "project": {"type": "lib", "name": "test-lib", "description": "A test library"},
             "github": {
                 "add_on_github": "yes",  # Should be boolean
-                "repo_private": "no"     # Should be boolean
+                "repo_private": "no",  # Should be boolean
             },
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}}
+            "ai": {"copilots": {}},
         }
-        
+
         with open(invalid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(invalid_config))
+        creator.enable_testing_mode()
         # Should handle string boolean values appropriately
         creator.load_config()
         # Implementation may convert strings to booleans
@@ -223,26 +211,19 @@ class TestDockerConfigValidation:
         """Test validation of valid Docker configuration."""
         valid_config = temp_config_dir / "valid_docker.yaml"
         config_data = {
-            "project": {
-                "type": "service",
-                "name": "test-service",
-                "description": "A test service"
-            },
+            "project": {"type": "service", "name": "test-service", "description": "A test service"},
             "github": {"add_on_github": False},
-            "docker": {
-                "docker_image": True,
-                "docker_compose": True
-            },
+            "docker": {"docker_image": True, "docker_compose": True},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}}
+            "ai": {"copilots": {}},
         }
-        
+
         with open(valid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(valid_config))
         creator.load_config()
-        
+
         assert creator.config["docker"]["docker_image"] is True
         assert creator.config["docker"]["docker_compose"] is True
 
@@ -250,18 +231,14 @@ class TestDockerConfigValidation:
         """Test handling when Docker section is missing."""
         config_without_docker = temp_config_dir / "no_docker.yaml"
         config_data = {
-            "project": {
-                "type": "service",
-                "name": "test-service",
-                "description": "A test service"
-            },
-            "github": {"add_on_github": False}
+            "project": {"type": "service", "name": "test-service", "description": "A test service"},
+            "github": {"add_on_github": False},
             # Missing docker section
         }
-        
+
         with open(config_without_docker, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(config_without_docker))
         # Should handle missing Docker section gracefully
         result = creator.create_project_from_config()
@@ -274,49 +251,43 @@ class TestAIConfigValidation:
         """Test validation of valid AI configuration."""
         valid_config = temp_config_dir / "valid_ai.yaml"
         config_data = {
-            "project": {
-                "type": "service",
-                "name": "test-service",
-                "description": "A test service"
-            },
+            "project": {"type": "service", "name": "test-service", "description": "A test service"},
             "github": {"add_on_github": False},
             "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
             "ai": {
                 "copilots": {
                     "cursor_rules_path": ".cursor/rules/coding_rules.md",
-                    "cline_rules_path": ".clinerules"
+                    "cline_rules_path": ".clinerules",
                 }
-            }
+            },
         }
-        
+
         with open(valid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(valid_config))
         creator.load_config()
-        
+
         assert "copilots" in creator.config["ai"]
-        assert creator.config["ai"]["copilots"]["cursor_rules_path"] == ".cursor/rules/coding_rules.md"
+        assert (
+            creator.config["ai"]["copilots"]["cursor_rules_path"] == ".cursor/rules/coding_rules.md"
+        )
 
     def test_missing_ai_section(self, temp_config_dir: Path):
         """Test handling when AI section is missing."""
         config_without_ai = temp_config_dir / "no_ai.yaml"
         config_data = {
-            "project": {
-                "type": "service",
-                "name": "test-service",
-                "description": "A test service"
-            },
+            "project": {"type": "service", "name": "test-service", "description": "A test service"},
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
-            "devcontainer": {"enabled": False}
+            "docker": {"docker_image": False, "docker_compose": False},
+            "devcontainer": {"enabled": False},
             # Missing ai section
         }
-        
+
         with open(config_without_ai, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(config_without_ai))
         # Should handle missing AI section gracefully
         result = creator.create_project_from_config()
@@ -329,13 +300,9 @@ class TestDevelopmentConfigValidation:
         """Test validation of valid development configuration."""
         valid_config = temp_config_dir / "valid_dev.yaml"
         config_data = {
-            "project": {
-                "type": "lib",
-                "name": "test-lib",
-                "description": "A test library"
-            },
+            "project": {"type": "lib", "name": "test-lib", "description": "A test library"},
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
             "ai": {"copilots": {}},
             "development": {
@@ -344,16 +311,16 @@ class TestDevelopmentConfigValidation:
                 "use_black": True,
                 "use_ruff": True,
                 "use_mypy": True,
-                "command_line_interface": "click"
-            }
+                "command_line_interface": "click",
+            },
         }
-        
+
         with open(valid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(valid_config))
         creator.load_config()
-        
+
         assert creator.config["development"]["use_pytest"] is True
         assert creator.config["development"]["command_line_interface"] == "click"
 
@@ -361,23 +328,19 @@ class TestDevelopmentConfigValidation:
         """Test validation with invalid CLI interface option."""
         invalid_config = temp_config_dir / "invalid_cli.yaml"
         config_data = {
-            "project": {
-                "type": "lib",
-                "name": "test-lib",
-                "description": "A test library"
-            },
+            "project": {"type": "lib", "name": "test-lib", "description": "A test library"},
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
             "ai": {"copilots": {}},
             "development": {
                 "command_line_interface": "invalid_option"  # Invalid option
-            }
+            },
         }
-        
+
         with open(invalid_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(invalid_config))
         # Should fail with invalid CLI interface option
         result = creator.create_project_from_config()
@@ -390,16 +353,11 @@ class TestConfigSchemaCompliance:
     def test_minimal_valid_config(self, temp_config_dir: Path):
         """Test minimal valid configuration."""
         minimal_config = temp_config_dir / "minimal.yaml"
-        config_data = {
-            "project": {
-                "type": "lib",
-                "name": "minimal-project"
-            }
-        }
-        
+        config_data = {"project": {"type": "lib", "name": "minimal-project"}}
+
         with open(minimal_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(minimal_config))
         # Should handle minimal config with defaults
         result = creator.create_project_from_config()
@@ -408,23 +366,19 @@ class TestConfigSchemaCompliance:
         """Test configuration with extra unknown fields."""
         extra_config = temp_config_dir / "extra.yaml"
         config_data = {
-            "project": {
-                "type": "lib",
-                "name": "test-lib",
-                "description": "A test library"
-            },
+            "project": {"type": "lib", "name": "test-lib", "description": "A test library"},
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {"docker_image": False, "docker_compose": False},
             "devcontainer": {"enabled": False},
             "ai": {"copilots": {}},
             "unknown_section": {  # Extra unknown section
                 "unknown_field": "unknown_value"
-            }
+            },
         }
-        
+
         with open(extra_config, "w") as f:
             yaml.dump(config_data, f)
-        
+
         creator = ProjectCreator(str(extra_config))
         # Should handle extra fields gracefully
         creator.load_config()
