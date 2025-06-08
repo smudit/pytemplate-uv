@@ -50,7 +50,7 @@ def create_project_from_config(
         )
         if not confirm:
             logger.info("Operation cancelled.")
-            raise typer.Exit()
+            raise typer.Exit(code=1)
 
     creator = ProjectCreator(config_path, interactive)
     if not creator.create_project_from_config(force=force):

@@ -73,6 +73,7 @@ class TestForceOption:
                 app, 
                 ["create-project-from-config", str(sample_lib_config), "--force"]
             )
+            # When user declines, typer.Exit(code=1) is called
             assert result.exit_code == 1
             # Note: The actual confirmation message might not appear in output when mocked
 
@@ -96,9 +97,10 @@ class TestProjectTypeValidation:
         
         for project_type in valid_types:
             with mock.patch("pytemplate.main.TemplateResolver") as mock_resolver:
-                mock_resolver.return_value.get_template_path.return_value = Path("mock/path")
-                mock_resolver.return_value.get_template_path.return_value.exists.return_value = True
-                mock_resolver.return_value.get_template_path.return_value.read_text.return_value = f"type: {project_type}"
+                mock_path = mock.MagicMock()
+                mock_path.exists.return_value = True
+                mock_path.read_text.return_value = f"type: {project_type}"
+                mock_resolver.return_value.get_template_path.return_value = mock_path
                 
                 result = runner.invoke(app, ["create-config", project_type])
                 assert result.exit_code == 0, f"Valid project type {project_type} should be accepted"
@@ -113,9 +115,10 @@ class TestProjectTypeValidation:
     def test_project_type_case_insensitive(self, temp_project_dir: Path):
         """Test that project types are case insensitive."""
         with mock.patch("pytemplate.main.TemplateResolver") as mock_resolver:
-            mock_resolver.return_value.get_template_path.return_value = Path("mock/path")
-            mock_resolver.return_value.get_template_path.return_value.exists.return_value = True
-            mock_resolver.return_value.get_template_path.return_value.read_text.return_value = "type: lib"
+            mock_path = mock.MagicMock()
+            mock_path.exists.return_value = True
+            mock_path.read_text.return_value = "type: lib"
+            mock_resolver.return_value.get_template_path.return_value = mock_path
             
             result = runner.invoke(app, ["create-config", "LIB"])
             assert result.exit_code == 0

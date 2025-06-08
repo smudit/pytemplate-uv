@@ -261,12 +261,44 @@ def mock_template_config(temp_templates_dir: Path) -> Path:
         Path: Path to the mock config file
 
     """
+    # Create the configs directory and template files
+    configs_dir = temp_templates_dir / "configs"
+    configs_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create mock config template files
+    for project_type in ["lib", "service", "workspace"]:
+        template_file = configs_dir / f"{project_type}.yaml.template"
+        template_content = f"""
+project:
+  type: {project_type}
+  name: test-{project_type}
+  description: Test {project_type} project
+  author: Test Author
+  email: test@example.com
+github:
+  add_on_github: false
+  repo_name: test-{project_type}
+  repo_private: false
+docker:
+  docker_image: {str(project_type == "service").lower()}
+  docker_compose: false
+devcontainer:
+  enabled: false
+ai:
+  copilots: {{}}
+"""
+        template_file.write_text(template_content)
+
     # Use the actual structure from template_paths.yaml
     config = {
+        "project_templates": {
+            "pyproject": str(temp_templates_dir / "pyproject-template"),
+            "pylibrary": str(temp_templates_dir / "pyproject-template"),  # Use local template for testing
+        },
         "config_templates": {
-            "lib": str(temp_templates_dir / "configs/lib.yaml.template"),
-            "service": str(temp_templates_dir / "configs/service.yaml.template"),
-            "workspace": str(temp_templates_dir / "configs/workspace.yaml.template"),
+            "lib": str(configs_dir / "lib.yaml.template"),
+            "service": str(configs_dir / "service.yaml.template"),
+            "workspace": str(configs_dir / "workspace.yaml.template"),
         },
         "shared": str(temp_templates_dir / "shared"),
     }
@@ -279,17 +311,23 @@ def mock_template_config(temp_templates_dir: Path) -> Path:
 
 
 @pytest.fixture(autouse=True)
-def setup_environment(temp_project_dir: str, mock_template_config: Path) -> None:
+def setup_environment(temp_project_dir: str, mock_template_config: Path, monkeypatch) -> None:
     """Set up environment variables for testing.
 
     Args:
     ----
         temp_project_dir: Temporary directory for project
         mock_template_config: Path to mock template config
+        monkeypatch: pytest monkeypatch fixture
 
     """
     os.environ["TEMPLATE_CONFIG_PATH"] = str(mock_template_config)
     os.environ["PROJECT_BASE_DIR"] = temp_project_dir
+    
+    # Mock the TEMPLATE_PATHS_FILE constant to use our mock config
+    monkeypatch.setattr("pytemplate.constants.TEMPLATE_PATHS_FILE", mock_template_config)
+    monkeypatch.setattr("pytemplate.template_manager.TEMPLATE_PATHS_FILE", mock_template_config)
+    monkeypatch.setattr("pytemplate.project_creator.TEMPLATE_PATHS_FILE", mock_template_config)
 
 
 @pytest.fixture(autouse=True)
