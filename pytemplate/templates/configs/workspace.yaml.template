@@ -1,0 +1,42 @@
+project:
+  name: my_workspace
+  description: A development workspace for multiple services
+  type: workspace
+  python_version: "3.12"
+  author: "Your Name"
+  email: "your.email@example.com"
+  version: "0.1.0"
+  license: "MIT"
+
+github:
+  repo_name: my-workspace
+  add_on_github: false
+  github_username: "your-github-username"
+  repo_private: true
+
+docker:
+  docker_image: true
+  docker_compose: true
+  use_existing_docker_image: null
+
+devcontainer:
+  add_devcontainer: true
+
+service_ports:
+  ports:
+    - 8000
+    - 8001
+
+development:
+  use_pytest: true
+  use_black: true
+  use_ruff: true
+  use_mypy: true
+  use_pre_commit: true
+
+ai:
+  copilots: 
+    cursor_rules_path: .cursor/rules
+    cursor_rules_path: .clinerules
+    
+  # supported_assistants: [cursor, cline]

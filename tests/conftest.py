@@ -340,3 +340,62 @@ def mock_cookiecutter(monkeypatch):
 
     # Replace cookiecutter with our mock version
     monkeypatch.setattr("pytemplate.project_creator.cookiecutter", mock_cookie)
+
+
+@pytest.fixture
+def mock_subprocess(monkeypatch):
+    """Mock subprocess calls for testing GitHub integration."""
+
+    def mock_check_call(*args, **kwargs):
+        """Mock subprocess.check_call."""
+        return 0
+
+    def mock_run(*args, **kwargs):
+        """Mock subprocess.run."""
+        from subprocess import CompletedProcess
+
+        return CompletedProcess(args=args[0], returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr("subprocess.check_call", mock_check_call)
+    monkeypatch.setattr("subprocess.run", mock_run)
+
+
+@pytest.fixture
+def sample_service_config(temp_config_dir: Path) -> Path:
+    """Create a sample service configuration file.
+
+    Args:
+    ----
+        temp_config_dir: Temporary directory for config files
+
+    Returns:
+    -------
+        Path: Path to the sample config file
+
+    """
+    config = {
+        "project": {
+            "type": "service",
+            "name": "test-service",
+            "description": "Test service project",
+            "python_version": "3.11",
+            "author": "Test Author",
+            "email": "test@example.com",
+        },
+        "github": {"add_on_github": True, "repo_name": "test-service", "repo_private": False},
+        "docker": {"docker_image": True, "docker_compose": True},
+        "devcontainer": {"enabled": True},
+        "service_ports": {"ports": ["8000", "8080"]},
+        "ai": {
+            "copilots": {
+                "cursor_rules_path": ".cursor/rules/coding_rules.md",
+                "cline_rules_path": ".clinerules",
+            }
+        },
+    }
+
+    config_path = temp_config_dir / "service_config.yaml"
+    with open(config_path, "w") as f:
+        yaml.dump(config, f)
+
+    return config_path

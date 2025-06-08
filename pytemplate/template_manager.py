@@ -16,33 +16,29 @@ from .logger import logger
 class TemplateResolver:
     """Handles template resolution and path management."""
 
-    def _is_safe_path(self, path: Path, base_dir: Path) -> bool:
-        """Validate that a path is safe (within base directory)."""
-        try:
-            return base_dir in path.resolve().parents
-        except (RuntimeError, OSError):
-            return False
+    def _resolve_template_path(self, template_path: str) -> Path:
+        """Resolve a template path to an absolute path.
 
-    def _resolve_template_path(self, relative_path: str) -> Path:
-        """Safely resolve template path relative to base directory."""
-        try:
-            # First join with base_dir, then resolve to handle any relative components
-            normalized_path = (self.base_dir / relative_path).resolve()
+        Args:
+        ----
+            template_path: The template path to resolve.
 
-            # Verify the resolved path is within base directory for security
-            if not self._is_safe_path(normalized_path, self.base_dir):
-                logger.warning(
-                    f"Path resolution warning: {normalized_path} is outside package directory {self.base_dir}"
-                )
-                # Fall back to package-relative path
-                normalized_path = (Path(__file__).resolve().parent.parent / relative_path).resolve()
-                logger.debug(f"Falling back to package-relative path: {normalized_path}")
+        Returns:
+        -------
+            The absolute path to the template.
 
-            logger.debug(f"Resolved '{relative_path}' to '{normalized_path}'")
-            return normalized_path
-        except FileNotFoundError:
-            logger.error(f"Template path does not exist: {relative_path}")
-            raise
+        """
+        # If it's a GitHub repository, return as is
+        if template_path.startswith("gh:"):
+            logger.debug(f"Using GitHub repository: {template_path}")
+            return Path(template_path)
+
+        # For local paths, ensure they're relative to the package directory
+        package_dir = Path(__file__).parent
+        resolved_path = package_dir / template_path
+
+        logger.debug(f"Resolved '{template_path}' to '{resolved_path}'")
+        return resolved_path
 
     def __init__(self, config_path: str | None = None):
         """Initialize template resolver.

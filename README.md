@@ -184,3 +184,5 @@ Leo Liu - [GitHub](https://github.com/yuxuzi)
 # TODO
 
 - [ ] use gh:arthurhenrique/cookiecutter-fastapi for fastapi template
+
+Please review the code and help arrange the templates naming convention properly. Project uses two kind of template. One as the base template to create new project, which is more of a project-wide template. And then there are templates to define config and settings within the project. As currently the naming convention is using template for everything, it will be more suitable to adjust the naming convention to differentiate between the two. So please review the code thoroughly and suggest changes or implement changes, keeping in mind that it doesn't break the code.

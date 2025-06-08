@@ -37,6 +37,34 @@ def _validate_template(template: str, resolver: TemplateResolver) -> Path:
     try:
         template_path = resolver.get_template_path("project_templates", template)
         logger.info(f"Using template path: {template_path}")
+        
+        # Check if the template path exists
+        if not template_path.exists():
+            # Try to find the template in the package directory
+            package_dir = Path(__file__).parent
+            
+            # First try with the template name as is
+            alternative_path = package_dir / "templates" / f"{template}-template"
+            if alternative_path.exists():
+                logger.info(f"Using alternative template path: {alternative_path}")
+                return alternative_path
+                
+            # If that doesn't work, try with just the template name
+            alternative_path = package_dir / "templates" / template
+            if alternative_path.exists():
+                logger.info(f"Using alternative template path: {alternative_path}")
+                return alternative_path
+                
+            # If that still doesn't work, try with the full template path name
+            template_name = template_path.name
+            alternative_path = package_dir / "templates" / template_name
+            if alternative_path.exists():
+                logger.info(f"Using alternative template path: {alternative_path}")
+                return alternative_path
+                
+            logger.error(f"Template path not found at: {template_path} or alternatives")
+            raise ValueError(f"Template path not found: {template_path}")
+                
         return template_path
     except ValueError as e:
         # Get available templates from config
@@ -82,9 +110,19 @@ def _create_project_with_cookiecutter(
             # Get the library template path from config
             lib_template = template_resolver.get_template_path("project_templates", "pylibrary")
             dev_settings = context.get("development", {})
+
+            # Get repo_name from github config or derive it from project_name
+            # This will override the template's default behavior of adding "python-" prefix
+            repo_name = context["github"].get("repo_name")
+            if not repo_name:
+                # If repo_name is not specified, derive it from project_name
+                repo_name = context["project"]["name"].replace("_", "-")
+                logger.info(f"Derived repo_name from project_name: {repo_name}")
+
             cookiecutter_context = {
                 # Project settings
                 "project_name": context["project"]["name"],
+                "repo_name": repo_name,  # Explicitly set repo_name to override template's default
                 "package_name": context["project"]["name"].replace("-", "_"),
                 "full_name": context["project"].get("author", "your name"),
                 "email": context["project"].get("email", "your.email@example.com"),
@@ -300,10 +338,7 @@ class ProjectCreator:
             # For library projects, use the pylibrary template
             if project_type == "lib":
                 logger.info("Creating library project structure...")
-                template_path = self.template_resolver.get_template_path(
-                    "project_templates",
-                    "pylibrary",  # Changed from "pyproject" to "pylibrary"
-                )
+                template_path = _validate_template("pylibrary", self.template_resolver)
                 context = {
                     "project_name": project_name,
                     **_get_context(),
@@ -341,10 +376,8 @@ class ProjectCreator:
             }
             logger.debug(f"Project context: {context}")
 
-            # Get template path for addons and normalize it
-            template_path = self.template_resolver.get_template_path(
-                "project_templates", "pyproject"
-            )
+            # Get template path for addons and validate it
+            template_path = _validate_template("pyproject", self.template_resolver)
 
             # Add non-package addons using cookiecutter
             output_dir = _create_project_with_cookiecutter(
@@ -407,8 +440,10 @@ class ProjectCreator:
                 logger.info(f"Changed to project directory: {self.project_path}")
 
                 if not (self.project_path / ".git").exists():
-                    logger.info("Initializing git repository...")
-                    subprocess.check_call(["git", "init"])
+                    logger.info("Initializing git repository with main branch...")
+                    subprocess.check_call(
+                        ["git", "init", "-b", "main"]
+                    )  # Initialize with main branch
                     subprocess.check_call(["git", "add", "."])
                     subprocess.check_call(["git", "commit", "-m", "Initial commit"])
 
