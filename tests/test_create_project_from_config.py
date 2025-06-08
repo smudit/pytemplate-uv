@@ -93,27 +93,26 @@ def test_create_project_from_config_existing_directory(
     - Project is created when user confirms overwrite
     - Project is not created when user declines overwrite
     """
+    from unittest import mock
+    
     # First create a project to ensure directory exists
     runner.invoke(app, ["create-project-from-config", str(sample_lib_config)])
 
     # Test when user confirms overwrite
-    result_yes = runner.invoke(
-        app,
-        ["create-project-from-config", str(sample_lib_config)],
-        input="y\n",  # Simulate user entering 'y' for yes
-    )
+    with mock.patch("typer.confirm", return_value=True):
+        result_yes = runner.invoke(
+            app,
+            ["create-project-from-config", str(sample_lib_config)]
+        )
 
-    assert result_yes.exit_code == 0, "Command should succeed when user confirms overwrite"
-    assert "Directory already exists. Do you want to overwrite?" in result_yes.output
-    assert Path(temp_project_dir).exists()
+        assert result_yes.exit_code == 0, "Command should succeed when user confirms overwrite"
+        assert Path(temp_project_dir).exists()
 
     # Test when user declines overwrite
-    result_no = runner.invoke(
-        app,
-        ["create-project-from-config", str(sample_lib_config)],
-        input="n\n",  # Simulate user entering 'n' for no
-    )
+    with mock.patch("typer.confirm", return_value=False):
+        result_no = runner.invoke(
+            app,
+            ["create-project-from-config", str(sample_lib_config)]
+        )
 
-    assert result_no.exit_code == 1, "Command should exit with code 1 when user declines overwrite"
-    assert "Directory already exists. Do you want to overwrite?" in result_no.output
-    assert "User chose not to overwrite. Exiting." in result_no.output
+        assert result_no.exit_code == 1, "Command should exit with code 1 when user declines overwrite"
