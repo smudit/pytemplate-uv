@@ -137,7 +137,7 @@ class TestServiceProjectCreation:
     """Test service project creation."""
 
     def test_create_service_project_basic(
-        self, temp_project_dir: Path, sample_service_config: Path
+        self, temp_project_dir: str, sample_service_config: Path
     ) -> None:
         """Test basic service project creation.
 
@@ -147,18 +147,20 @@ class TestServiceProjectCreation:
         - Basic service structure is created
         """
         with mock.patch("pytemplate.project_creator._validate_template") as mock_validate, \
-             mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call:
+             mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call, \
+             mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
             mock_validate.return_value = Path("templates/pyproject-template")
             mock_check_call.return_value = 0
+            mock_resolver.return_value.get_template_path.return_value = Path("templates/shared/coding_rules.md")
 
             creator = ProjectCreator(str(sample_service_config))
             result = creator.create_project_from_config()
 
             assert result is True, "Project creation should succeed"
-            assert (temp_project_dir / "test-service").exists(), "Project directory should be created"
+            assert (Path(temp_project_dir) / "test-service").exists(), "Project directory should be created"
 
     def test_create_service_project_with_addons(
-        self, temp_project_dir: Path, sample_service_config: Path
+        self, temp_project_dir: str, sample_service_config: Path
     ) -> None:
         """Test service project creation with addons.
 
@@ -168,9 +170,11 @@ class TestServiceProjectCreation:
         - Addons are properly configured
         """
         with mock.patch("pytemplate.project_creator._validate_template") as mock_validate, \
-             mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call:
+             mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call, \
+             mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
             mock_validate.return_value = Path("templates/pyproject-template")
             mock_check_call.return_value = 0
+            mock_resolver.return_value.get_template_path.return_value = Path("templates/shared/coding_rules.md")
 
             # Update config to enable addons
             with open(sample_service_config) as f:
@@ -191,7 +195,7 @@ class TestServiceProjectCreation:
             result = creator.create_project_from_config()
 
             assert result is True, "Project creation should succeed"
-            assert (temp_project_dir / "test-service").exists(), "Project directory should be created"
+            assert (Path(temp_project_dir) / "test-service").exists(), "Project directory should be created"
 
 
 class TestGitHubIntegration:

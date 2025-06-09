@@ -72,7 +72,7 @@ class TestWorkspaceProjectCreation:
     """Test workspace project creation functionality."""
 
     def test_create_workspace_project_basic(
-        temp_project_dir: Path, sample_workspace_config: Path
+        self, temp_project_dir: str, sample_workspace_config: Path
     ) -> None:
         """Test basic workspace project creation.
 
@@ -103,11 +103,11 @@ class TestWorkspaceProjectCreation:
 
             assert result.exit_code == 0, "Command should exit with code 0"
             assert (
-                temp_project_dir / "test-workspace"
+                Path(temp_project_dir) / "test-workspace"
             ).exists(), "Project directory should be created"
 
     def test_create_workspace_project_with_github(
-        temp_project_dir: Path, sample_workspace_config: Path
+        self, temp_project_dir: str, sample_workspace_config: Path
     ) -> None:
         """Test workspace project creation with GitHub integration.
 
@@ -147,11 +147,11 @@ class TestWorkspaceProjectCreation:
 
             assert result.exit_code == 0, "Command should exit with code 0"
             assert (
-                temp_project_dir / "test-workspace"
+                Path(temp_project_dir) / "test-workspace"
             ).exists(), "Project directory should be created"
 
     def test_create_workspace_project_with_devcontainer(
-        temp_project_dir: Path, sample_workspace_config: Path
+        self, temp_project_dir: str, sample_workspace_config: Path
     ) -> None:
         """Test workspace project creation with devcontainer support.
 
@@ -191,7 +191,7 @@ class TestWorkspaceProjectCreation:
 
             assert result.exit_code == 0, "Command should exit with code 0"
             assert (
-                temp_project_dir / "test-workspace"
+                Path(temp_project_dir) / "test-workspace"
             ).exists(), "Project directory should be created"
 
     def test_workspace_config_validation(self, temp_config_dir: Path):
@@ -242,7 +242,7 @@ class TestWorkspaceProjectCreation:
         # Workspace projects should allow Docker configurations
         assert creator.validate_config() is True
 
-    def test_workspace_cli_creation(temp_project_dir: Path, sample_workspace_config: Path) -> None:
+    def test_workspace_cli_creation(self, temp_project_dir: str, sample_workspace_config: Path) -> None:
         """Test workspace project creation via CLI.
 
         Verifies that:
@@ -254,6 +254,7 @@ class TestWorkspaceProjectCreation:
             mock.patch("pytemplate.project_creator._validate_template") as mock_validate,
             mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call,
             mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver,
+            mock.patch("typer.confirm", return_value=True) as mock_confirm,
         ):
             mock_validate.return_value = Path("templates/pyproject-template")
             mock_check_call.return_value = 0
@@ -272,13 +273,12 @@ class TestWorkspaceProjectCreation:
                     "create-project-from-config",
                     str(sample_workspace_config),
                     "--force",
-                    "--no-interactive",
                 ],
             )
 
             assert result.exit_code == 0, "Command should exit with code 0"
             assert (
-                temp_project_dir / "test-workspace"
+                Path(temp_project_dir) / "test-workspace"
             ).exists(), "Project directory should be created"
 
     def test_workspace_with_invalid_config(self, temp_config_dir: Path):

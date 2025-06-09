@@ -486,6 +486,9 @@ class ProjectCreator:
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to run GitHub command: {e}")
             return False
+        except subprocess.TimeoutExpired as e:
+            logger.error(f"GitHub command timed out: {e}")
+            return False
 
     def copy_ai_templates(self) -> bool:
         """Copy AI-related template files based on configuration.
