@@ -150,7 +150,11 @@ class TestGitHubConfigValidation:
                 "repo_private": False,
                 "github_username": "testuser",
             },
-            "docker": {"docker_image": False},
+            "docker": {
+                "docker_image": True,
+                "docker_compose": True,
+                "base_image": "python:3.11-slim"
+            },
             "devcontainer": {"enabled": False},
             "ai": {"copilots": {}},
         }
@@ -253,7 +257,11 @@ class TestAIConfigValidation:
         config_data = {
             "project": {"type": "service", "name": "test-service", "description": "A test service"},
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False},
+            "docker": {
+                "docker_image": True,
+                "docker_compose": True,
+                "base_image": "python:3.11-slim"
+            },
             "devcontainer": {"enabled": False},
             "ai": {
                 "copilots": {

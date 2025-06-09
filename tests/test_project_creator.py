@@ -138,28 +138,60 @@ class TestServiceProjectCreation:
 
     def test_create_service_project_basic(
         self, temp_project_dir: Path, sample_service_config: Path
-    ):
-        """Test basic service project creation."""
-        creator = ProjectCreator(str(sample_service_config))
+    ) -> None:
+        """Test basic service project creation.
 
-        with mock.patch("pytemplate.project_creator._validate_template") as mock_validate:
+        Verifies that:
+        - Command exits successfully
+        - Project directory is created
+        - Basic service structure is created
+        """
+        with mock.patch("pytemplate.project_creator._validate_template") as mock_validate, \
+             mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call:
             mock_validate.return_value = Path("templates/pyproject-template")
+            mock_check_call.return_value = 0
 
+            creator = ProjectCreator(str(sample_service_config))
             result = creator.create_project_from_config()
-            assert result is True
-            assert creator.project_path is not None
+
+            assert result is True, "Project creation should succeed"
+            assert (temp_project_dir / "test-service").exists(), "Project directory should be created"
 
     def test_create_service_project_with_addons(
-        self, temp_project_dir: Path, sample_service_config: Path, mock_subprocess
-    ):
-        """Test service project creation with all addons enabled."""
-        creator = ProjectCreator(str(sample_service_config))
+        self, temp_project_dir: Path, sample_service_config: Path
+    ) -> None:
+        """Test service project creation with addons.
 
-        with mock.patch("pytemplate.project_creator._validate_template") as mock_validate:
+        Verifies that:
+        - Command exits successfully
+        - Project directory is created
+        - Addons are properly configured
+        """
+        with mock.patch("pytemplate.project_creator._validate_template") as mock_validate, \
+             mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call:
             mock_validate.return_value = Path("templates/pyproject-template")
+            mock_check_call.return_value = 0
 
+            # Update config to enable addons
+            with open(sample_service_config) as f:
+                config = yaml.safe_load(f)
+
+            config["github"]["add_on_github"] = True
+            config["ai"] = {
+                "copilots": {
+                    "cursor_rules_path": ".cursor/rules.md",
+                    "cline_rules_path": ".cline/rules.md"
+                }
+            }
+
+            with open(sample_service_config, "w") as f:
+                yaml.dump(config, f)
+
+            creator = ProjectCreator(str(sample_service_config))
             result = creator.create_project_from_config()
-            assert result is True
+
+            assert result is True, "Project creation should succeed"
+            assert (temp_project_dir / "test-service").exists(), "Project directory should be created"
 
 
 class TestGitHubIntegration:
@@ -239,12 +271,23 @@ class TestAITemplateIntegration:
         creator.project_path = Path(temp_project_dir) / "test-service"
         creator.project_path.mkdir(parents=True, exist_ok=True)
 
+        # Create a mock coding rules template
+        rules_template = temp_templates_dir / "shared" / "coding_rules.md"
+        rules_template.parent.mkdir(parents=True, exist_ok=True)
+        rules_template.write_text("# Coding Rules\n\nTest rules content")
+
         # Mock the template resolver to return the temp templates directory
         with mock.patch.object(creator.template_resolver, "get_template_path") as mock_get_path:
-            mock_get_path.return_value = temp_templates_dir / "shared"
+            mock_get_path.return_value = rules_template
 
             result = creator.copy_ai_templates()
             assert result is True
+
+            # Verify files were created
+            cursor_rules = creator.project_path / ".cursor/rules/coding_rules.md"
+            cline_rules = creator.project_path / ".clinerules"
+            assert cursor_rules.exists()
+            assert cline_rules.exists()
 
     def test_copy_ai_templates_no_project_path(
         self, temp_project_dir: Path, sample_service_config: Path

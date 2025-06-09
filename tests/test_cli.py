@@ -6,7 +6,6 @@ import logging
 from pathlib import Path
 from unittest import mock
 
-import pytest
 from typer.testing import CliRunner
 
 from pytemplate.main import app
@@ -56,8 +55,7 @@ class TestDebugLogging:
     def test_debug_flag_with_interactive(self, temp_project_dir: Path, sample_lib_config: Path):
         """Test debug flag combined with interactive mode."""
         result = runner.invoke(
-            app, 
-            ["create-project-from-config", str(sample_lib_config), "--debug", "--interactive"]
+            app, ["create-project-from-config", str(sample_lib_config), "--debug", "--interactive"]
         )
         assert result.exit_code == 0
 
@@ -70,8 +68,7 @@ class TestForceOption:
         # Mock typer.confirm to return False (decline)
         with mock.patch("typer.confirm", return_value=False):
             result = runner.invoke(
-                app, 
-                ["create-project-from-config", str(sample_lib_config), "--force"]
+                app, ["create-project-from-config", str(sample_lib_config), "--force"]
             )
             # When user declines, typer.Exit(code=1) is called
             assert result.exit_code == 1
@@ -82,8 +79,7 @@ class TestForceOption:
         # Mock typer.confirm to return True (accept)
         with mock.patch("typer.confirm", return_value=True):
             result = runner.invoke(
-                app, 
-                ["create-project-from-config", str(sample_lib_config), "--force"]
+                app, ["create-project-from-config", str(sample_lib_config), "--force"]
             )
             assert result.exit_code == 0
 
@@ -94,16 +90,18 @@ class TestProjectTypeValidation:
     def test_valid_project_types(self, temp_project_dir: Path):
         """Test that valid project types are accepted."""
         valid_types = ["lib", "service", "workspace"]
-        
+
         for project_type in valid_types:
             with mock.patch("pytemplate.main.TemplateResolver") as mock_resolver:
                 mock_path = mock.MagicMock()
                 mock_path.exists.return_value = True
                 mock_path.read_text.return_value = f"type: {project_type}"
                 mock_resolver.return_value.get_template_path.return_value = mock_path
-                
+
                 result = runner.invoke(app, ["create-config", project_type])
-                assert result.exit_code == 0, f"Valid project type {project_type} should be accepted"
+                assert (
+                    result.exit_code == 0
+                ), f"Valid project type {project_type} should be accepted"
 
     def test_invalid_project_type(self, temp_project_dir: Path):
         """Test that invalid project types are rejected."""
@@ -119,11 +117,13 @@ class TestProjectTypeValidation:
             mock_path.exists.return_value = True
             mock_path.read_text.return_value = "type: lib"
             mock_resolver.return_value.get_template_path.return_value = mock_path
-            
+
             result = runner.invoke(app, ["create-config", "LIB"])
             assert result.exit_code == 0
             # Verify that the callback converted to lowercase
-            mock_resolver.return_value.get_template_path.assert_called_with("config_templates", "lib")
+            mock_resolver.return_value.get_template_path.assert_called_with(
+                "config_templates", "lib"
+            )
 
 
 class TestErrorHandling:
@@ -132,10 +132,10 @@ class TestErrorHandling:
     def test_missing_config_file(self, temp_project_dir: Path):
         """Test handling of missing configuration file."""
         nonexistent_config = Path(temp_project_dir) / "nonexistent.yaml"
-        
+
         with mock.patch("pytemplate.main.ProjectCreator") as mock_creator:
             mock_creator.side_effect = FileNotFoundError(f"No such file: {nonexistent_config}")
-            
+
             result = runner.invoke(app, ["create-project-from-config", str(nonexistent_config)])
             assert result.exit_code == 1
 
@@ -143,15 +143,17 @@ class TestErrorHandling:
         """Test handling of invalid YAML configuration."""
         invalid_config = Path(temp_project_dir) / "invalid.yaml"
         invalid_config.write_text("invalid: yaml: content: [")
-        
+
         result = runner.invoke(app, ["create-project-from-config", str(invalid_config)])
         assert result.exit_code == 1
 
     def test_template_not_found_error(self, temp_project_dir: Path):
         """Test handling when template is not found."""
         with mock.patch("pytemplate.main.TemplateResolver") as mock_resolver:
-            mock_resolver.return_value.get_template_path.side_effect = ValueError("Template not found")
-            
+            mock_resolver.return_value.get_template_path.side_effect = ValueError(
+                "Template not found"
+            )
+
             result = runner.invoke(app, ["create-config", "lib"])
             assert result.exit_code == 1
             assert "Configuration template not found in template_paths.yaml" in result.output
@@ -163,15 +165,13 @@ class TestInteractiveMode:
     def test_interactive_mode_basic(self, temp_project_dir: Path, sample_lib_config: Path):
         """Test basic interactive mode functionality."""
         result = runner.invoke(
-            app, 
-            ["create-project-from-config", str(sample_lib_config), "--interactive"]
+            app, ["create-project-from-config", str(sample_lib_config), "--interactive"]
         )
         assert result.exit_code == 0
 
     def test_interactive_with_debug(self, temp_project_dir: Path, sample_lib_config: Path):
         """Test interactive mode with debug logging."""
         result = runner.invoke(
-            app, 
-            ["create-project-from-config", str(sample_lib_config), "--interactive", "--debug"]
+            app, ["create-project-from-config", str(sample_lib_config), "--interactive", "--debug"]
         )
         assert result.exit_code == 0

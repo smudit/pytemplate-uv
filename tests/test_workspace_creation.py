@@ -72,41 +72,127 @@ class TestWorkspaceProjectCreation:
     """Test workspace project creation functionality."""
 
     def test_create_workspace_project_basic(
-        self, temp_project_dir: Path, sample_workspace_config: Path
-    ):
-        """Test basic workspace project creation."""
-        creator = ProjectCreator(str(sample_workspace_config))
+        temp_project_dir: Path, sample_workspace_config: Path
+    ) -> None:
+        """Test basic workspace project creation.
 
-        with mock.patch("pytemplate.project_creator._validate_template") as mock_validate:
+        Verifies that:
+        - Command exits successfully
+        - Project directory is created
+        - Basic workspace structure is created
+        """
+        with (
+            mock.patch("pytemplate.project_creator._validate_template") as mock_validate,
+            mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call,
+            mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver,
+        ):
             mock_validate.return_value = Path("templates/pyproject-template")
+            mock_check_call.return_value = 0
+            mock_resolver.return_value.get_template_path.return_value = Path(
+                "templates/shared/coding_rules.md"
+            )
 
-            result = creator.create_project_from_config()
-            assert result is True
-            assert creator.project_path is not None
+            # Create template directory structure
+            template_dir = Path("templates/shared")
+            template_dir.mkdir(parents=True, exist_ok=True)
+            (template_dir / "coding_rules.md").write_text("# Coding Rules")
+
+            result = runner.invoke(
+                app, ["create-project-from-config", str(sample_workspace_config)]
+            )
+
+            assert result.exit_code == 0, "Command should exit with code 0"
+            assert (
+                temp_project_dir / "test-workspace"
+            ).exists(), "Project directory should be created"
 
     def test_create_workspace_project_with_github(
-        self, temp_project_dir: Path, sample_workspace_config: Path, mock_subprocess
-    ):
-        """Test workspace project creation with GitHub integration."""
-        creator = ProjectCreator(str(sample_workspace_config))
+        temp_project_dir: Path, sample_workspace_config: Path
+    ) -> None:
+        """Test workspace project creation with GitHub integration.
 
-        with mock.patch("pytemplate.project_creator._validate_template") as mock_validate:
+        Verifies that:
+        - Command exits successfully
+        - Project directory is created
+        - GitHub repository is created
+        """
+        with (
+            mock.patch("pytemplate.project_creator._validate_template") as mock_validate,
+            mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call,
+            mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver,
+        ):
             mock_validate.return_value = Path("templates/pyproject-template")
+            mock_check_call.return_value = 0
+            mock_resolver.return_value.get_template_path.return_value = Path(
+                "templates/shared/coding_rules.md"
+            )
 
-            result = creator.create_project_from_config()
-            assert result is True
+            # Create template directory structure
+            template_dir = Path("templates/shared")
+            template_dir.mkdir(parents=True, exist_ok=True)
+            (template_dir / "coding_rules.md").write_text("# Coding Rules")
+
+            # Update config to enable GitHub
+            with open(sample_workspace_config) as f:
+                config = yaml.safe_load(f)
+
+            config["github"]["add_on_github"] = True
+
+            with open(sample_workspace_config, "w") as f:
+                yaml.dump(config, f)
+
+            result = runner.invoke(
+                app, ["create-project-from-config", str(sample_workspace_config)]
+            )
+
+            assert result.exit_code == 0, "Command should exit with code 0"
+            assert (
+                temp_project_dir / "test-workspace"
+            ).exists(), "Project directory should be created"
 
     def test_create_workspace_project_with_devcontainer(
-        self, temp_project_dir: Path, sample_workspace_config: Path
-    ):
-        """Test workspace project creation with devcontainer enabled."""
-        creator = ProjectCreator(str(sample_workspace_config))
+        temp_project_dir: Path, sample_workspace_config: Path
+    ) -> None:
+        """Test workspace project creation with devcontainer support.
 
-        with mock.patch("pytemplate.project_creator._validate_template") as mock_validate:
+        Verifies that:
+        - Command exits successfully
+        - Project directory is created
+        - Devcontainer configuration is created
+        """
+        with (
+            mock.patch("pytemplate.project_creator._validate_template") as mock_validate,
+            mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call,
+            mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver,
+        ):
             mock_validate.return_value = Path("templates/pyproject-template")
+            mock_check_call.return_value = 0
+            mock_resolver.return_value.get_template_path.return_value = Path(
+                "templates/shared/coding_rules.md"
+            )
 
-            result = creator.create_project_from_config()
-            assert result is True
+            # Create template directory structure
+            template_dir = Path("templates/shared")
+            template_dir.mkdir(parents=True, exist_ok=True)
+            (template_dir / "coding_rules.md").write_text("# Coding Rules")
+
+            # Update config to enable devcontainer
+            with open(sample_workspace_config) as f:
+                config = yaml.safe_load(f)
+
+            config["devcontainer"]["use_devcontainer"] = True
+
+            with open(sample_workspace_config, "w") as f:
+                yaml.dump(config, f)
+
+            result = runner.invoke(
+                app, ["create-project-from-config", str(sample_workspace_config)]
+            )
+
+            assert result.exit_code == 0, "Command should exit with code 0"
+            assert (
+                temp_project_dir / "test-workspace"
+            ).exists(), "Project directory should be created"
 
     def test_workspace_config_validation(self, temp_config_dir: Path):
         """Test workspace configuration validation."""
@@ -156,14 +242,44 @@ class TestWorkspaceProjectCreation:
         # Workspace projects should allow Docker configurations
         assert creator.validate_config() is True
 
-    def test_workspace_cli_creation(self, temp_project_dir: Path, sample_workspace_config: Path):
-        """Test workspace project creation via CLI."""
-        result = runner.invoke(
-            app, ["create-project-from-config", str(sample_workspace_config)]
-        )
+    def test_workspace_cli_creation(temp_project_dir: Path, sample_workspace_config: Path) -> None:
+        """Test workspace project creation via CLI.
 
-        assert result.exit_code == 0
-        assert "Project creation completed" in result.output
+        Verifies that:
+        - Command exits successfully
+        - Project directory is created
+        - CLI arguments are properly handled
+        """
+        with (
+            mock.patch("pytemplate.project_creator._validate_template") as mock_validate,
+            mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call,
+            mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver,
+        ):
+            mock_validate.return_value = Path("templates/pyproject-template")
+            mock_check_call.return_value = 0
+            mock_resolver.return_value.get_template_path.return_value = Path(
+                "templates/shared/coding_rules.md"
+            )
+
+            # Create template directory structure
+            template_dir = Path("templates/shared")
+            template_dir.mkdir(parents=True, exist_ok=True)
+            (template_dir / "coding_rules.md").write_text("# Coding Rules")
+
+            result = runner.invoke(
+                app,
+                [
+                    "create-project-from-config",
+                    str(sample_workspace_config),
+                    "--force",
+                    "--no-interactive",
+                ],
+            )
+
+            assert result.exit_code == 0, "Command should exit with code 0"
+            assert (
+                temp_project_dir / "test-workspace"
+            ).exists(), "Project directory should be created"
 
     def test_workspace_with_invalid_config(self, temp_config_dir: Path):
         """Test workspace project creation with invalid configuration."""

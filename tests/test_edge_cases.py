@@ -174,10 +174,10 @@ class TestNetworkEdgeCases:
         creator.project_path.mkdir(parents=True, exist_ok=True)
 
         with mock.patch("subprocess.check_call") as mock_call:
-            mock_call.side_effect = TimeoutError("GitHub API timeout")
+            mock_call.side_effect = subprocess.TimeoutExpired(["git", "init"], timeout=30)
 
             result = creator.create_github_repo()
-            assert result is False
+            assert result is False, "GitHub repository creation should fail on timeout"
 
     def test_github_authentication_failure(
         self, temp_config_dir: Path, sample_service_config: Path

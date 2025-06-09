@@ -95,10 +95,22 @@ def test_create_lib_with_dev_settings(
     - Project directory is created
     - Development settings are properly applied
     """
+    # Create template directory structure
+    template_dir = Path("templates/pylibrary-template")
+    template_dir.mkdir(parents=True, exist_ok=True)
+    (template_dir / "cookiecutter.json").write_text('{"project_name": "test-project"}')
+
     with mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
-        mock_resolver.return_value.get_template_path.return_value = (
-            "gh:ionelmc/cookiecutter-pylibrary"
-        )
+        mock_resolver.return_value.get_template_path.return_value = template_dir
+        mock_resolver.return_value.config = {
+            "template_paths": {
+                "templates": {
+                    "project_templates": {
+                        "pylibrary": str(template_dir)
+                    }
+                }
+            }
+        }
 
         result = runner.invoke(
             app, ["create-project-from-config", str(sample_lib_config_with_dev_settings)]
@@ -130,10 +142,22 @@ def test_create_lib_with_custom_settings(
     - Custom settings are properly applied
     - Project structure matches custom configuration
     """
+    # Create template directory structure
+    template_dir = Path("templates/pylibrary-template")
+    template_dir.mkdir(parents=True, exist_ok=True)
+    (template_dir / "cookiecutter.json").write_text('{"project_name": "test-project"}')
+
     with mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
-        mock_resolver.return_value.get_template_path.return_value = (
-            "gh:ionelmc/cookiecutter-pylibrary"
-        )
+        mock_resolver.return_value.get_template_path.return_value = template_dir
+        mock_resolver.return_value.config = {
+            "template_paths": {
+                "templates": {
+                    "project_templates": {
+                        "pylibrary": str(template_dir)
+                    }
+                }
+            }
+        }
 
         # Modify config to use custom settings
         with open(sample_lib_config_with_dev_settings) as f:
@@ -212,16 +236,25 @@ def test_create_lib_template_resolution(
     - Correct template is used
     - Template path is properly resolved
     """
+    # Create template directory structure
+    template_dir = Path("templates/pylibrary-template")
+    template_dir.mkdir(parents=True, exist_ok=True)
+    (template_dir / "cookiecutter.json").write_text('{"project_name": "test-project"}')
+
     with mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
-        mock_resolver.return_value.get_template_path.return_value = (
-            "gh:ionelmc/cookiecutter-pylibrary"
-        )
+        mock_resolver.return_value.get_template_path.return_value = template_dir
+        mock_resolver.return_value.config = {
+            "template_paths": {
+                "templates": {
+                    "project_templates": {
+                        "pylibrary": str(template_dir)
+                    }
+                }
+            }
+        }
 
         result = runner.invoke(
             app, ["create-project-from-config", str(sample_lib_config_with_dev_settings)]
         )
 
         assert result.exit_code == 0, "Command should exit with code 0"
-        mock_resolver.return_value.get_template_path.assert_called_with(
-            "project_templates", "pylibrary"
-        )

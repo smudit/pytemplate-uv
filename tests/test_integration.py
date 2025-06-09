@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-import os
-import shutil
-import subprocess
 from pathlib import Path
 from unittest import mock
 
-import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -37,20 +33,22 @@ class TestEndToEndWorkflows:
         if not config:
             config = {}
 
-        config.update({
-            "project": {
-                "type": "lib",
-                "name": "test-integration-lib",
-                "description": "Integration test library",
-                "author": "Test Author",
-                "email": "test@example.com",
-                "version": "0.1.0",
-            },
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
-            "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
-        })
+        config.update(
+            {
+                "project": {
+                    "type": "lib",
+                    "name": "test-integration-lib",
+                    "description": "Integration test library",
+                    "author": "Test Author",
+                    "email": "test@example.com",
+                    "version": "0.1.0",
+                },
+                "github": {"add_on_github": False},
+                "docker": {"docker_image": False, "docker_compose": False},
+                "devcontainer": {"enabled": False},
+                "ai": {"copilots": {}},
+            }
+        )
 
         with open(config_path, "w") as f:
             yaml.dump(config, f)
@@ -67,7 +65,9 @@ class TestEndToEndWorkflows:
     def test_complete_service_project_workflow(self, temp_project_dir: Path, temp_config_dir: Path):
         """Test complete service project creation workflow."""
         # Step 1: Create configuration
-        result = runner.invoke(app, ["create-config", "service", "--output-path", "service_config.yaml"])
+        result = runner.invoke(
+            app, ["create-config", "service", "--output-path", "service_config.yaml"]
+        )
         assert result.exit_code == 0
 
         config_path = Path(temp_project_dir) / "service_config.yaml"
@@ -80,20 +80,22 @@ class TestEndToEndWorkflows:
         if not config:
             config = {}
 
-        config.update({
-            "project": {
-                "type": "service",
-                "name": "test-integration-service",
-                "description": "Integration test service",
-                "author": "Test Author",
-                "email": "test@example.com",
-                "version": "0.1.0",
-            },
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": True, "docker_compose": True},
-            "devcontainer": {"enabled": True},
-            "ai": {"copilots": {}},
-        })
+        config.update(
+            {
+                "project": {
+                    "type": "service",
+                    "name": "test-integration-service",
+                    "description": "Integration test service",
+                    "author": "Test Author",
+                    "email": "test@example.com",
+                    "version": "0.1.0",
+                },
+                "github": {"add_on_github": False},
+                "docker": {"docker_image": True, "docker_compose": True},
+                "devcontainer": {"enabled": True},
+                "ai": {"copilots": {}},
+            }
+        )
 
         with open(config_path, "w") as f:
             yaml.dump(config, f)
@@ -107,10 +109,14 @@ class TestEndToEndWorkflows:
         project_path = Path(temp_project_dir) / "test-integration-service"
         assert project_path.exists()
 
-    def test_complete_workspace_project_workflow(self, temp_project_dir: Path, temp_config_dir: Path):
+    def test_complete_workspace_project_workflow(
+        self, temp_project_dir: Path, temp_config_dir: Path
+    ):
         """Test complete workspace project creation workflow."""
         # Step 1: Create configuration
-        result = runner.invoke(app, ["create-config", "workspace", "--output-path", "workspace_config.yaml"])
+        result = runner.invoke(
+            app, ["create-config", "workspace", "--output-path", "workspace_config.yaml"]
+        )
         assert result.exit_code == 0
 
         config_path = Path(temp_project_dir) / "workspace_config.yaml"
@@ -123,20 +129,22 @@ class TestEndToEndWorkflows:
         if not config:
             config = {}
 
-        config.update({
-            "project": {
-                "type": "workspace",
-                "name": "test-integration-workspace",
-                "description": "Integration test workspace",
-                "author": "Test Author",
-                "email": "test@example.com",
-                "version": "0.1.0",
-            },
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
-            "devcontainer": {"enabled": True},
-            "ai": {"copilots": {}},
-        })
+        config.update(
+            {
+                "project": {
+                    "type": "workspace",
+                    "name": "test-integration-workspace",
+                    "description": "Integration test workspace",
+                    "author": "Test Author",
+                    "email": "test@example.com",
+                    "version": "0.1.0",
+                },
+                "github": {"add_on_github": False},
+                "docker": {"docker_image": False, "docker_compose": False},
+                "devcontainer": {"enabled": True},
+                "ai": {"copilots": {}},
+            }
+        )
 
         with open(config_path, "w") as f:
             yaml.dump(config, f)
@@ -239,8 +247,7 @@ class TestConfigurationTemplateIntegration:
         for project_type in project_types:
             # Create config from template
             result = runner.invoke(
-                app, 
-                ["create-config", project_type, "--output-path", f"{project_type}_config.yaml"]
+                app, ["create-config", project_type, "--output-path", f"{project_type}_config.yaml"]
             )
             assert result.exit_code == 0
 
@@ -256,17 +263,19 @@ class TestConfigurationTemplateIntegration:
             if not isinstance(config, dict):
                 config = {}
 
-            config.update({
-                "project": {
-                    "type": project_type,
-                    "name": f"test-{project_type}",
-                    "description": f"Test {project_type} project",
-                },
-                "github": {"add_on_github": False},
-                "docker": {"docker_image": project_type == "service", "docker_compose": False},
-                "devcontainer": {"enabled": False},
-                "ai": {"copilots": {}},
-            })
+            config.update(
+                {
+                    "project": {
+                        "type": project_type,
+                        "name": f"test-{project_type}",
+                        "description": f"Test {project_type} project",
+                    },
+                    "github": {"add_on_github": False},
+                    "docker": {"docker_image": project_type == "service", "docker_compose": False},
+                    "devcontainer": {"enabled": False},
+                    "ai": {"copilots": {}},
+                }
+            )
 
             with open(config_path, "w") as f:
                 yaml.dump(config, f)
@@ -360,23 +369,18 @@ class TestCLIIntegration:
             yaml.dump(config_data, f)
 
         # Test debug flag
-        result = runner.invoke(
-            app, 
-            ["create-project-from-config", str(config_path), "--debug"]
-        )
+        result = runner.invoke(app, ["create-project-from-config", str(config_path), "--debug"])
         assert result.exit_code == 0
 
         # Test interactive flag
         result = runner.invoke(
-            app, 
-            ["create-project-from-config", str(config_path), "--interactive"]
+            app, ["create-project-from-config", str(config_path), "--interactive"]
         )
         assert result.exit_code == 0
 
         # Test combined flags
         result = runner.invoke(
-            app, 
-            ["create-project-from-config", str(config_path), "--debug", "--interactive"]
+            app, ["create-project-from-config", str(config_path), "--debug", "--interactive"]
         )
         assert result.exit_code == 0
 
@@ -409,7 +413,7 @@ class TestExternalToolIntegration:
         # Mock subprocess calls to simulate git/gh commands
         with mock.patch("subprocess.check_call") as mock_call:
             result = runner.invoke(app, ["create-project-from-config", str(config_path)])
-            
+
             # Should attempt to call git/gh commands
             if mock_call.called:
                 # Verify git-related commands were called
@@ -448,7 +452,9 @@ class TestExternalToolIntegration:
 class TestPerformanceIntegration:
     """Test performance aspects of integrated workflows."""
 
-    def test_multiple_project_creation_performance(self, temp_project_dir: Path, temp_config_dir: Path):
+    def test_multiple_project_creation_performance(
+        self, temp_project_dir: Path, temp_config_dir: Path
+    ):
         """Test performance when creating multiple projects."""
         import time
 
@@ -479,7 +485,9 @@ class TestPerformanceIntegration:
         total_time = end_time - start_time
 
         # Should complete within reasonable time (adjust threshold as needed)
-        assert total_time < 30, f"Creating {project_count} projects took {total_time:.2f}s, which is too slow"
+        assert (
+            total_time < 30
+        ), f"Creating {project_count} projects took {total_time:.2f}s, which is too slow"
 
     def test_large_config_handling_performance(self, temp_project_dir: Path, temp_config_dir: Path):
         """Test performance with large configuration files."""
@@ -515,5 +523,7 @@ class TestPerformanceIntegration:
         processing_time = end_time - start_time
 
         # Should handle large configs efficiently
-        assert processing_time < 10, f"Large config processing took {processing_time:.2f}s, which is too slow"
+        assert (
+            processing_time < 10
+        ), f"Large config processing took {processing_time:.2f}s, which is too slow"
         assert result.exit_code == 0
