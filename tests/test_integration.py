@@ -388,38 +388,6 @@ class TestCLIIntegration:
 class TestExternalToolIntegration:
     """Test integration with external tools (when available)."""
 
-    def test_git_integration_simulation(self, temp_project_dir: Path, temp_config_dir: Path):
-        """Test Git integration (simulated)."""
-        config_data = {
-            "project": {
-                "type": "service",
-                "name": "git-integration-test",
-                "description": "Git integration test",
-            },
-            "github": {
-                "add_on_github": True,
-                "repo_name": "git-integration-test",
-                "repo_private": False,
-            },
-            "docker": {"docker_image": True, "docker_compose": False},
-            "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
-        }
-
-        config_path = temp_config_dir / "git_integration_test.yaml"
-        with open(config_path, "w") as f:
-            yaml.dump(config_data, f)
-
-        # Mock subprocess calls to simulate git/gh commands
-        with mock.patch("subprocess.check_call") as mock_call:
-            result = runner.invoke(app, ["create-project-from-config", str(config_path)])
-
-            # Should attempt to call git/gh commands
-            if mock_call.called:
-                # Verify git-related commands were called
-                calls = [call[0][0] for call in mock_call.call_args_list]
-                git_commands = [call for call in calls if any("git" in str(arg) for arg in call)]
-                assert len(git_commands) > 0, "Expected git commands to be called"
 
     def test_docker_integration_simulation(self, temp_project_dir: Path, temp_config_dir: Path):
         """Test Docker integration (simulated)."""

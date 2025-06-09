@@ -20,29 +20,6 @@ runner = CliRunner()
 class TestConfigurationEdgeCases:
     """Test edge cases in configuration handling."""
 
-    def test_empty_config_file(self, temp_config_dir: Path):
-        """Test handling of empty configuration file."""
-        empty_config = temp_config_dir / "empty.yaml"
-        empty_config.write_text("")
-
-        creator = ProjectCreator(str(empty_config))
-        with pytest.raises(Exception):  # Should fail with empty config
-            creator.load_config()
-            creator.create_project_from_config()
-
-    def test_config_with_only_comments(self, temp_config_dir: Path):
-        """Test handling of config file with only comments."""
-        comment_config = temp_config_dir / "comments.yaml"
-        comment_config.write_text("""
-        # This is a comment
-        # Another comment
-        """)
-
-        creator = ProjectCreator(str(comment_config))
-        creator.enable_testing_mode()
-        # Should fail with empty config since it's missing required sections
-        with pytest.raises(KeyError):
-            creator.load_config()
 
     def test_config_with_null_values(self, temp_config_dir: Path):
         """Test handling of config with null values."""

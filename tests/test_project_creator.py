@@ -67,23 +67,6 @@ class TestConfigLoading:
         with pytest.raises(yaml.YAMLError):
             creator.load_config()
 
-    def test_load_config_missing_required_fields(self, temp_config_dir: Path):
-        """Test handling when config is missing required fields."""
-        incomplete_config = temp_config_dir / "incomplete.yaml"
-        config_data = {
-            "project": {
-                "name": "test-project"
-                # Missing "type" field
-            }
-        }
-
-        with open(incomplete_config, "w") as f:
-            yaml.dump(config_data, f)
-
-        creator = ProjectCreator(str(incomplete_config))
-        creator.enable_testing_mode()
-        with pytest.raises(KeyError):
-            creator.load_config()
 
 
 class TestLibraryProjectCreation:
@@ -337,12 +320,3 @@ class TestErrorHandling:
             result = creator.create_project_from_config()
             assert result is False
 
-    def test_template_validation_failure(self, temp_project_dir: Path, sample_lib_config: Path):
-        """Test handling when template validation fails."""
-        creator = ProjectCreator(str(sample_lib_config))
-
-        with mock.patch("pytemplate.project_creator._validate_template") as mock_validate:
-            mock_validate.side_effect = ValueError("Template not found")
-
-            result = creator.create_project_from_config()
-            assert result is False

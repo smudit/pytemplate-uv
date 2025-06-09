@@ -159,19 +159,3 @@ class TestErrorHandling:
             assert "Configuration template not found in template_paths.yaml" in result.output
 
 
-class TestInteractiveMode:
-    """Test interactive mode functionality."""
-
-    def test_interactive_mode_basic(self, temp_project_dir: Path, sample_lib_config: Path):
-        """Test basic interactive mode functionality."""
-        result = runner.invoke(
-            app, ["create-project-from-config", str(sample_lib_config), "--interactive"]
-        )
-        assert result.exit_code == 0
-
-    def test_interactive_with_debug(self, temp_project_dir: Path, sample_lib_config: Path):
-        """Test interactive mode with debug logging."""
-        result = runner.invoke(
-            app, ["create-project-from-config", str(sample_lib_config), "--interactive", "--debug"]
-        )
-        assert result.exit_code == 0

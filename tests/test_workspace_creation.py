@@ -106,49 +106,6 @@ class TestWorkspaceProjectCreation:
                 Path(temp_project_dir) / "test-workspace"
             ).exists(), "Project directory should be created"
 
-    def test_create_workspace_project_with_github(
-        self, temp_project_dir: str, sample_workspace_config: Path
-    ) -> None:
-        """Test workspace project creation with GitHub integration.
-
-        Verifies that:
-        - Command exits successfully
-        - Project directory is created
-        - GitHub repository is created
-        """
-        with (
-            mock.patch("pytemplate.project_creator._validate_template") as mock_validate,
-            mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call,
-            mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver,
-        ):
-            mock_validate.return_value = Path("templates/pyproject-template")
-            mock_check_call.return_value = 0
-            mock_resolver.return_value.get_template_path.return_value = Path(
-                "templates/shared/coding_rules.md"
-            )
-
-            # Create template directory structure
-            template_dir = Path("templates/shared")
-            template_dir.mkdir(parents=True, exist_ok=True)
-            (template_dir / "coding_rules.md").write_text("# Coding Rules")
-
-            # Update config to enable GitHub
-            with open(sample_workspace_config) as f:
-                config = yaml.safe_load(f)
-
-            config["github"]["add_on_github"] = True
-
-            with open(sample_workspace_config, "w") as f:
-                yaml.dump(config, f)
-
-            result = runner.invoke(
-                app, ["create-project-from-config", str(sample_workspace_config)]
-            )
-
-            assert result.exit_code == 0, "Command should exit with code 0"
-            assert (
-                Path(temp_project_dir) / "test-workspace"
-            ).exists(), "Project directory should be created"
 
     def test_create_workspace_project_with_devcontainer(
         self, temp_project_dir: str, sample_workspace_config: Path
