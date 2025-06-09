@@ -6,11 +6,13 @@ PyTemplate UV is a powerful CLI tool for creating Python project templates using
 
 ## Features
 
-- 🚀 Quick project initialization
-- 🔧 Support for multiple project templates (FastAPI, Standard Python)
+- 🚀 Quick project initialization with configuration-driven approach
+- 🔧 Support for multiple project types (Library, Service, Workspace)
 - 📦 Integrated with `uv` package management
 - 🧪 Comprehensive testing infrastructure
 - 🔍 Linting and type checking support
+- 🐳 Docker and DevContainer support for services
+- 🤖 AI copilot integration (Cursor, Cline)
 
 ## Prerequisites
 
@@ -37,35 +39,78 @@ To install the project creator tool:
 
 ## Usage
 
-### Create a Project
+PyTemplate UV uses a two-step process for project creation:
+1. Create a configuration file that specifies project requirements
+2. Generate the project structure from the configuration
+
+### Step 1: Create a Configuration File
 
 ```bash
-# Create a standard Python project (default)
-pytemplate-uv create-project
+# Create configuration for a library project
+pytemplate-uv create-config lib
 
-# Create a FastAPI project
-pytemplate-uv create-project --template fastapi
+# Create configuration for a service project
+pytemplate-uv create-config service
 
-# Create a project with a custom name
-pytemplate-uv create-project --name my-awesome-project
+# Create configuration for a workspace project
+pytemplate-uv create-config workspace
 
-# Create a project with custom template and name
-pytemplate-uv create-project --template fastapi --name my-api-project
+# Specify custom output path
+pytemplate-uv create-config lib --output-path my-lib-config.yaml
 ```
 
-### Project Creation Options
+### Step 2: Create Project from Configuration
 
-- `--template`: Choose the project template (default: pyproject)
-  - Options: `pyproject`, `fastapi`
-- `--name`: Specify a custom project name
-- Additional template-specific options can be passed as needed
+```bash
+# Create project from configuration file
+pytemplate-uv create-project-from-config project_config.yaml
+
+# With interactive mode (allows customization during creation)
+pytemplate-uv create-project-from-config project_config.yaml --interactive
+
+# Force overwrite existing directory
+pytemplate-uv create-project-from-config project_config.yaml --force
+```
+
+### Template Architecture
+
+PyTemplate UV uses three types of templates:
+
+1. **Project Scaffolds** (`project_scaffolds/`): Cookiecutter templates that create project directory structures
+   - `pyproject`: Basic Python project structure for services and workspaces
+   - `pylibrary`: Full-featured library structure with documentation, CI/CD
+
+2. **Configuration Specifications** (`config_specs/`): YAML templates that define project requirements
+   - `lib.yaml.template`: Configuration for library projects
+   - `service.yaml.template`: Configuration for service projects (includes Docker)
+   - `workspace.yaml.template`: Configuration for workspace/monorepo projects
+
+3. **Shared Resources** (`shared_resources/`): Common files copied to projects
+   - `coding_rules.md`: Coding guidelines for AI assistants
+
+### Project Types
+
+- **Library (`lib`)**: Python packages meant for distribution
+  - Full testing and documentation setup
+  - PyPI publishing configuration
+  - No Docker/DevContainer support
+
+- **Service (`service`)**: Standalone applications/APIs
+  - Docker and docker-compose support
+  - DevContainer for VS Code
+  - Service port configuration
+
+- **Workspace (`workspace`)**: Monorepo or multi-project setups
+  - Shared dependencies management
+  - DevContainer support
+  - No Docker by default
 
 ### Next Steps After Project Creation
 
 1. `cd` into your project directory
-2. Run `uv venv` to create a virtual environment
-3. Run `uv pip install -e .` to install dependencies
-4. Run `make setup` to set up the development environment
+2. Run `uv sync` to create virtual environment and install dependencies
+3. For services: Run `docker-compose up` if Docker is configured
+4. For libraries: Run tests with `pytest`
 
 ## Development
 
@@ -138,23 +183,29 @@ pytest -k "test_create_project"
   - `temp_config_dir`: Temporary directory for config files
   - `sample_lib_config`: Sample library configuration
   - `temp_templates_dir`: Temporary templates directory
-  - `mock_template_config`: Mock template configuration
+  - `mock_template_config`: Mock template configuration with new naming convention
 
 - `tests/test_cli.py`: CLI command tests covering:
-  - Project creation (basic, with template, no-input, force)
-  - Config-based project creation
-  - Configuration file generation
-  - Template management (init, list, copy)
-  - Edge cases and error scenarios
+  - Configuration-based project creation
+  - Configuration file generation for all project types
+  - Debug and force flags
+  - Error handling scenarios
+
+- `tests/test_template_manager.py`: Template management tests:
+  - Template path resolution
+  - Project scaffold loading
+  - Configuration spec handling
+  - Shared resource management
 
 #### Test Coverage
 
-The test suite aims to cover:
+The test suite comprehensively covers:
 - All CLI commands and their options
-- Edge cases and error handling
-- Template management functionality
-- Project creation workflows
-- Configuration file handling
+- Configuration validation and loading
+- Template resolution with new naming convention
+- Project creation for all types (lib, service, workspace)
+- Edge cases and security scenarios
+- Integration tests for end-to-end workflows
 
 ### Linting
 
@@ -181,11 +232,4 @@ Leo Liu - [GitHub](https://github.com/yuxuzi)
 *Simplifying Python project creation with modern best practices* 🐍✨
 
 
-# TODO
-
-- [ ] use gh:arthurhenrique/cookiecutter-fastapi for fastapi template
-
-Please review the code and help arrange the templates naming convention properly. Project uses two kind of template. One as the base template to create new project, which is more of a project-wide template. And then there are templates to define config and settings within the project. As currently the naming convention is using template for everything, it will be more suitable to adjust the naming convention to differentiate between the two. So please review the code thoroughly and suggest changes or implement changes, keeping in mind that it doesn't break the code.
-
-
-Please fix the failing tests and remove any redundant tests. 
+ 

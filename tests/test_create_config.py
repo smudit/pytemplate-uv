@@ -96,7 +96,7 @@ def test_create_config_valid_types(
             assert config is not None, "Config should be loaded successfully"
 
         # Verify TemplateResolver was called with the right parameters
-        mock_get_template_path.assert_called_with("config_templates", project_type)
+        mock_get_template_path.assert_called_with("config_specs", project_type)
 
 
 def test_create_config_invalid_type(temp_project_dir: Path, mock_config_templates: Path) -> None:
@@ -173,4 +173,4 @@ def test_create_config_custom_output(temp_project_dir: Path, mock_config_templat
             assert config is not None, "Config should be loaded successfully"
 
         # Verify TemplateResolver was called with the right parameters
-        mock_get_template_path.assert_called_with("config_templates", "lib")
+        mock_get_template_path.assert_called_with("config_specs", "lib")

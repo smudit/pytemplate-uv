@@ -291,18 +291,20 @@ ai:
 
     # Use the actual structure from template_paths.yaml
     config = {
-        "project_templates": {
+        "project_scaffolds": {
             "pyproject": str(temp_templates_dir / "pyproject-template"),
             "pylibrary": str(
                 temp_templates_dir / "pyproject-template"
             ),  # Use local template for testing
         },
-        "config_templates": {
+        "config_specs": {
             "lib": str(configs_dir / "lib.yaml.template"),
             "service": str(configs_dir / "service.yaml.template"),
             "workspace": str(configs_dir / "workspace.yaml.template"),
         },
-        "shared": str(temp_templates_dir / "shared"),
+        "shared_resources": {
+            "coding_rules": str(temp_templates_dir / "shared" / "coding_rules.md"),
+        },
     }
 
     config_path = temp_templates_dir / "template_paths.yaml"

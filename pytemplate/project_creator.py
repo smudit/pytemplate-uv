@@ -35,7 +35,7 @@ def _validate_template(template: str, resolver: TemplateResolver) -> Path:
     """
     logger.debug(f"Validating template: {template}")
     try:
-        template_path = resolver.get_template_path("project_templates", template)
+        template_path = resolver.get_template_path("project_scaffolds", template)
         logger.info(f"Using template path: {template_path}")
 
         # Check if the template path exists
@@ -69,7 +69,7 @@ def _validate_template(template: str, resolver: TemplateResolver) -> Path:
     except ValueError as e:
         # Get available templates from config
         available_templates = list(
-            resolver.config["template_paths"]["templates"]["project_templates"].keys()
+            resolver.config.get("project_scaffolds", {}).keys()
         )
 
         error_msg = f"Template not found! Available templates: {', '.join(available_templates)}"
@@ -108,7 +108,7 @@ def _create_project_with_cookiecutter(
     try:
         if context.get("project", {}).get("type") == "lib":
             # Get the library template path from config
-            lib_template = template_resolver.get_template_path("project_templates", "pylibrary")
+            lib_template = template_resolver.get_template_path("project_scaffolds", "pylibrary")
             dev_settings = context.get("development", {})
 
             # Get repo_name from github config or derive it from project_name
@@ -521,7 +521,7 @@ class ProjectCreator:
 
             # Try to get the path to coding_rules.md template
             try:
-                rules_template = self.template_resolver.get_template_path("shared", "coding_rules")
+                rules_template = self.template_resolver.get_template_path("shared_resources", "coding_rules")
                 logger.debug(f"Found coding rules template at: {rules_template}")
 
                 # Skip the entire process if template file doesn't exist

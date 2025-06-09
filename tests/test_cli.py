@@ -122,7 +122,7 @@ class TestProjectTypeValidation:
             assert result.exit_code == 0
             # Verify that the callback converted to lowercase
             mock_resolver.return_value.get_template_path.assert_called_with(
-                "config_templates", "lib"
+                "config_specs", "lib"
             )
 
 

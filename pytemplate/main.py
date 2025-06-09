@@ -84,7 +84,7 @@ def create_config(
         resolver = TemplateResolver()
 
         try:
-            config_template_path = resolver.get_template_path("config_templates", project_type)
+            config_template_path = resolver.get_template_path("config_specs", project_type)
 
             if config_template_path.exists():
                 output_path.write_text(config_template_path.read_text())

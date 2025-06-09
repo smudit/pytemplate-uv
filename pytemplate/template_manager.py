@@ -142,7 +142,7 @@ class TemplateResolver:
 
         Args:
         ----
-            template_type (str): Type of template (e.g., 'project_templates', 'config_templates').
+            template_type (str): Type of template (e.g., 'project_scaffolds', 'config_specs', 'shared_resources').
             template_name (str): Name of the template.
 
         Returns:
@@ -220,7 +220,7 @@ class TemplateResolver:
 
         """
         try:
-            # Iterate through template types (e.g., project_templates, config_templates)
+            # Iterate through template types (e.g., project_scaffolds, config_specs, shared_resources)
             for template_type, template_group in self.config.items():
                 # Skip non-dict entries (like comments or metadata)
                 if not isinstance(template_group, dict):

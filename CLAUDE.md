@@ -20,3 +20,6 @@
 - **Organization**: Keep files under 500 lines; one class per file
 - **Libraries**: Use pathlib for paths, typer for CLI, loguru for logging
 - **Testing**: Write tests for all new functionality
+
+## Testing and debugging environment
+- Use .venv for testing and debugging
