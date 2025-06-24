@@ -38,7 +38,11 @@ def _validate_template(template: str, resolver: TemplateResolver) -> Path:
         template_path = resolver.get_template_path("project_scaffolds", template)
         logger.info(f"Using template path: {template_path}")
 
-        # Check if the template path exists
+        # Check if the template path exists (skip for GitHub URLs)
+        if str(template_path).startswith("gh:"):
+            logger.debug("GitHub URL detected, skipping existence check")
+            return template_path
+
         if not template_path.exists():
             # Try to find the template in the package directory
             package_dir = Path(__file__).parent
