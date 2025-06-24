@@ -59,9 +59,3 @@ development:
 
 service_ports:
   ports: []
-
-ai:
-  copilots: 
-    - cursor
-    - cline
-  # supported_assistants: [cursor, cline]

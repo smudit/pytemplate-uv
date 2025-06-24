@@ -33,10 +33,3 @@ development:
   use_ruff: true
   use_mypy: true
   use_pre_commit: true
-
-ai:
-  copilots: 
-    cursor_rules_path: .cursor/rules
-    cursor_rules_path: .clinerules
-    
-  # supported_assistants: [cursor, cline]

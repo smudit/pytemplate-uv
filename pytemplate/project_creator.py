@@ -75,7 +75,7 @@ def _validate_template(template: str, resolver: TemplateResolver) -> Path:
         error_msg = f"Template not found! Available templates: {', '.join(available_templates)}"
         logger.error(error_msg)
         logger.error(f"Error: {str(e)}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 def _get_context() -> dict[str, str]:
@@ -167,14 +167,14 @@ def _create_project_with_cookiecutter(
                 return _execute_cookiecutter(template_path, no_input, context, True)
             else:
                 logger.info("User chose not to overwrite. Exiting.")
-                raise typer.Exit(1)
+                raise typer.Exit(1) from None
         raise
 
 
 def _execute_cookiecutter(
     template_path: Path, no_input: bool, context: dict, overwrite: bool
 ) -> str:
-    """Helper function to execute cookiecutter with consistent parameters."""
+    """Execute cookiecutter with consistent parameters."""
     return cookiecutter(
         str(template_path),
         no_input=no_input,
@@ -194,7 +194,8 @@ class ProjectCreator:
 
         """
         logger.debug(
-            f"Initializing ProjectCreator with config_path: {config_path}, interactive: {interactive}"
+            f"Initializing ProjectCreator with config_path: {config_path}, "
+            f"interactive: {interactive}"
         )
         self.config_path = Path(config_path)
         self.interactive = interactive
@@ -229,13 +230,13 @@ class ProjectCreator:
             # For CLI usage, raise typer.Exit, but for testing allow the original exception
             if hasattr(self, "_testing_mode") and self._testing_mode:
                 raise
-            raise typer.Exit(f"Config file not found: {str(e)}")
+            raise typer.Exit(f"Config file not found: {str(e)}") from e
         except yaml.YAMLError as e:
             logger.error(f"Error parsing YAML: {e}")
             # For CLI usage, raise typer.Exit, but for testing allow the original exception
             if hasattr(self, "_testing_mode") and self._testing_mode:
                 raise
-            raise typer.Exit(f"Error parsing YAML: {str(e)}")
+            raise typer.Exit(f"Error parsing YAML: {str(e)}") from e
 
         if not self.validate_config():
             logger.error("Invalid configuration")
@@ -317,10 +318,8 @@ class ProjectCreator:
                 logger.error(f"Missing required section: {section}")
                 return False
 
-        # Ensure the ai section exists with defaults if not present
-        if "ai" not in self.config:
-            logger.debug("AI section not found, adding with default configuration")
-            self.config["ai"] = {"copilots": {}}
+        # AI configuration is now loaded from template_paths.yaml, not from project config
+        # No need to add AI section to project config
 
         logger.debug("Required sections validation successful")
         return True
@@ -381,7 +380,12 @@ class ProjectCreator:
                 self.project_path = Path(output_dir)
                 logger.info(f"Created Python package structure at: {self.project_path}")
 
-                # For lib projects, we're done unless GitHub repo is needed
+                # Always initialize local git repository
+                if not self.initialize_local_git_repo():
+                    logger.error("Failed to initialize local git repository")
+                    return False
+
+                # Create GitHub repo if requested
                 if self.config["github"]["add_on_github"]:
                     logger.info("GitHub repository creation requested")
                     if not self.create_github_repo():
@@ -415,13 +419,20 @@ class ProjectCreator:
 
             self.project_path = Path(output_dir)
 
-            # Initialize GitHub repository if requested
+            # Always initialize local git repository
+            if not self.initialize_local_git_repo():
+                logger.error("Failed to initialize local git repository")
+                return False
+
+            # Create GitHub repository if requested
             if self.config.get("github", {}).get("add_on_github"):
                 logger.info("GitHub repository creation requested")
                 if not self.create_github_repo():
                     return False
-            if self.config.get("ai", {}).get("copilots"):
-                logger.info("AI copilot templates requested")
+            # Always check for AI copilots from template_paths.yaml
+            copilots = self._get_copilots_config()
+            if copilots:
+                logger.info(f"Found {len(copilots)} AI copilot configurations")
                 if not self.copy_ai_templates():
                     return False
             logger.info(f"Project created successfully at {self.project_path}")
@@ -430,6 +441,48 @@ class ProjectCreator:
         except Exception as e:
             logger.error(f"Failed to create project addons: {str(e)}")
             return False
+
+    def initialize_local_git_repo(self) -> bool:
+        """Initialize a local git repository with main branch.
+
+        Returns
+        -------
+            bool: True if successful, False otherwise
+
+        """
+        if not self.project_path:
+            logger.error("Project path not set")
+            return False
+
+        if not (self.project_path / ".git").exists():
+            logger.info("Initializing local git repository with main branch...")
+            try:
+                # Save current directory
+                current_dir = os.getcwd()
+                os.chdir(self.project_path)
+
+                # Initialize git repo
+                subprocess.check_call(["git", "init"])
+                # Set default branch to main
+                subprocess.check_call(["git", "checkout", "-b", "main"])
+                subprocess.check_call(["git", "add", "."])
+                subprocess.check_call(["git", "commit", "-m", "Initial commit"])
+
+                # Return to original directory
+                os.chdir(current_dir)
+                logger.info("Local git repository initialized successfully")
+                return True
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Failed to initialize git repository: {e}")
+                os.chdir(current_dir)
+                return False
+            except Exception as e:
+                logger.error(f"Unexpected error during git initialization: {e}")
+                os.chdir(current_dir)
+                return False
+        else:
+            logger.info("Git repository already exists")
+            return True
 
     def create_github_repo(self) -> bool:
         """Create a GitHub repository using the GitHub CLI (gh) command.
@@ -465,17 +518,13 @@ class ProjectCreator:
         logger.debug(f"Repository visibility: {'private' if is_private else 'public'}")
 
         try:
+            # Initialize local git repo first
+            if not self.initialize_local_git_repo():
+                logger.error("Failed to initialize local git repository")
+                return False
+
             with change_directory(self.project_path):
                 logger.info(f"Changed to project directory: {self.project_path}")
-
-                if not (self.project_path / ".git").exists():
-                    logger.info("Initializing git repository with main branch...")
-                    # Use compatible git init approach for older git versions
-                    subprocess.check_call(["git", "init"])
-                    # Set default branch to main (works with older git versions)
-                    subprocess.check_call(["git", "checkout", "-b", "main"])
-                    subprocess.check_call(["git", "add", "."])
-                    subprocess.check_call(["git", "commit", "-m", "Initial commit"])
 
                 cmd = ["gh", "repo", "create", repo_name, private_flag, "--source=.", "--push"]
                 logger.info(f"Running GitHub command: {' '.join(cmd)}")
@@ -488,6 +537,76 @@ class ProjectCreator:
             return False
         except subprocess.TimeoutExpired as e:
             logger.error(f"GitHub command timed out: {e}")
+            return False
+
+    def _get_copilots_config(self) -> dict[str, str]:
+        """Load copilots configuration from template_paths.yaml.
+
+        Returns
+        -------
+            dict[str, str]: Dictionary mapping copilot names to their rules file paths.
+
+        """
+        # Load from template_paths.yaml instead of project config
+        copilots_config = self.template_resolver.config.get("ai_copilots", {})
+
+        if not isinstance(copilots_config, dict):
+            logger.warning(
+                f"AI copilots configuration is not a dict, found "
+                f"{type(copilots_config).__name__}"
+            )
+            return {}
+
+        logger.debug(f"Loaded {len(copilots_config)} AI copilot configurations")
+        return copilots_config
+
+    def _load_template_content(self, template_type: str, template_name: str) -> str | None:
+        """Load content from a template file.
+
+        Args:
+        ----
+            template_type: Type of template (e.g., "shared_resources").
+            template_name: Name of the template (e.g., "coding_rules").
+
+        Returns:
+        -------
+            str | None: Template content if found, None otherwise.
+
+        """
+        try:
+            template_path = self.template_resolver.get_template_path(template_type, template_name)
+            logger.debug(f"Found {template_name} template at: {template_path}")
+
+            if not template_path.exists():
+                logger.warning(f"{template_name} template not found at {template_path}")
+                return None
+
+            return template_path.read_text()
+        except (ValueError, FileNotFoundError) as e:
+            logger.warning(f"Could not find {template_name} template: {e}")
+            return None
+
+    def _copy_rules_to_path(self, rules_content: str, target_path: str) -> bool:
+        """Copy rules content to a specific path.
+
+        Args:
+        ----
+            rules_content: Content to write.
+            target_path: Relative path within project directory.
+
+        Returns:
+        -------
+            bool: True if successful, False otherwise.
+
+        """
+        try:
+            full_path = self.project_path / target_path
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+            full_path.write_text(rules_content)
+            logger.info(f"Copied coding rules to {target_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to copy rules to {target_path}: {e}")
             return False
 
     def copy_ai_templates(self) -> bool:
@@ -504,58 +623,27 @@ class ProjectCreator:
             return False
 
         try:
-            ai_config = self.config.get("ai", {})
-            copilots_config = ai_config.get("copilots", {})
-
-            # Ensure copilots_config is a dict, not a string
-            if isinstance(copilots_config, str):
-                logger.debug("AI copilot configuration is a string, treating as empty config")
-                copilots_config = {}
-            elif not isinstance(copilots_config, dict):
-                logger.debug("AI copilot configuration is not a dict, treating as empty config")
-                copilots_config = {}
-
+            copilots_config = self._get_copilots_config()
             if not copilots_config:
                 logger.debug("No AI copilot configuration found, skipping template copy")
                 return True
 
-            # Try to get the path to coding_rules.md template
-            try:
-                rules_template = self.template_resolver.get_template_path("shared_resources", "coding_rules")
-                logger.debug(f"Found coding rules template at: {rules_template}")
-
-                # Skip the entire process if template file doesn't exist
-                if not rules_template.exists():
-                    logger.warning("Coding rules template not found, skipping AI rules creation")
-                    return True
-
-                rules_content = rules_template.read_text()
-                logger.debug("Successfully read coding rules template content")
-
-                # Copy rules for cursor if configured
-                cursor_rules_path = copilots_config.get("cursor_rules_path")
-                if cursor_rules_path:
-                    rules_dir = self.project_path / cursor_rules_path
-                    rules_dir.parent.mkdir(parents=True, exist_ok=True)
-                    rules_dir.write_text(rules_content)
-                    logger.info(f"Copied coding rules to {cursor_rules_path}")
-
-                # Copy rules for cline if configured
-                cline_rules_path = copilots_config.get("cline_rules_path")
-                if cline_rules_path:
-                    rules_file = self.project_path / cline_rules_path
-                    rules_file.parent.mkdir(parents=True, exist_ok=True)
-                    rules_file.write_text(rules_content)
-                    logger.info(f"Copied coding rules to {cline_rules_path}")
-
-            except (ValueError, FileNotFoundError):
-                logger.warning("Could not find coding rules template, skipping AI rules creation")
-                # Don't create any rules files if template not found
+            # Load template content
+            rules_content = self._load_template_content("shared_resources", "coding_rules")
+            if not rules_content:
+                logger.warning("Coding rules template not found, skipping AI rules creation")
                 return True
 
-            logger.info("AI template copy operation completed successfully")
-            return True
+            # Copy rules for each configured copilot
+            success = True
+            for copilot_name, rules_path in copilots_config.items():
+                logger.debug(f"Processing copilot '{copilot_name}' with path '{rules_path}'")
+                if not self._copy_rules_to_path(rules_content, rules_path):
+                    success = False
+
+            logger.info("AI template copy operation completed")
+            return success
 
         except Exception as e:
-            logger.error(f"Failed to copy AI templates: {str(e)}")
+            logger.error(f"Failed to copy AI templates: {e}")
             return False

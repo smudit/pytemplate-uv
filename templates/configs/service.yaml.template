@@ -33,9 +33,3 @@ development:
   use_ruff: true
   use_mypy: true
   use_pre_commit: true
-
-ai:
-  copilots: 
-    - cursor
-    - cline
-  # supported_assistants: [cursor, cline]

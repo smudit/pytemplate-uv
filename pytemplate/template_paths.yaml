@@ -5,6 +5,7 @@
 project_scaffolds:
   pyproject: templates/pyproject-template
   pylibrary: gh:ionelmc/cookiecutter-pylibrary
+  terraform-infra: gh:horothesun/infra-cookiecutter-template
 
 # Configuration specifications - YAML templates that define project requirements
 config_specs:
@@ -15,3 +16,11 @@ config_specs:
 # Shared resources - Common files that can be copied to any project
 shared_resources:
   coding_rules: templates/shared/coding_rules.md
+
+# AI copilots configuration
+# Format: copilot_name: rules_file_path
+ai_copilots:
+  cursor: .cursor/rules
+  cline: .clinerules
+  augment: .augment-guidelines
+  claude: CLAUDE.md

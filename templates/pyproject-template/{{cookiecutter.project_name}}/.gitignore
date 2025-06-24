@@ -87,3 +87,7 @@ docs/_build/
 # Temporary files
 *.~*
 *.temp
+
+# Secrets
+.secrets.yaml
+.env    

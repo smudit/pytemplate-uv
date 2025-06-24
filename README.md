@@ -232,4 +232,7 @@ Leo Liu - [GitHub](https://github.com/yuxuzi)
 *Simplifying Python project creation with modern best practices* 🐍✨
 
 
- 
+ # TODO
+ - [] Add .gitignore to shared resources 
+ - [] Add CLAUDE.md to ai rules
+ - [] Fix not creating git if add_on_github is false

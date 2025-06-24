@@ -263,18 +263,27 @@ class TestAITemplateIntegration:
         rules_template.parent.mkdir(parents=True, exist_ok=True)
         rules_template.write_text("# Coding Rules\n\nTest rules content")
 
-        # Mock the template resolver to return the temp templates directory
+        # Mock the template resolver to return the temp templates directory and ai_copilots config
         with mock.patch.object(creator.template_resolver, "get_template_path") as mock_get_path:
             mock_get_path.return_value = rules_template
+            
+            # Mock the ai_copilots configuration from template_paths.yaml
+            with mock.patch.object(creator.template_resolver, "config", {"ai_copilots": {
+                "cursor": ".cursor/rules",
+                "cline": ".clinerules"
+            }}):
+                result = creator.copy_ai_templates()
+                assert result is True
 
-            result = creator.copy_ai_templates()
-            assert result is True
-
-            # Verify files were created
-            cursor_rules = creator.project_path / ".cursor/rules/coding_rules.md"
-            cline_rules = creator.project_path / ".clinerules"
-            assert cursor_rules.exists()
-            assert cline_rules.exists()
+                # Verify files were created at the paths defined in template_paths.yaml
+                cursor_rules = creator.project_path / ".cursor/rules"
+                cline_rules = creator.project_path / ".clinerules"
+                assert cursor_rules.exists()
+                assert cline_rules.exists()
+                
+                # Verify content
+                assert cursor_rules.read_text() == "# Coding Rules\n\nTest rules content"
+                assert cline_rules.read_text() == "# Coding Rules\n\nTest rules content"
 
     def test_copy_ai_templates_no_project_path(
         self, temp_project_dir: Path, sample_service_config: Path
@@ -299,10 +308,15 @@ class TestAITemplateIntegration:
         # Mock the template resolver to return a non-existent path
         with mock.patch.object(creator.template_resolver, "get_template_path") as mock_get_path:
             mock_get_path.return_value = Path("/nonexistent/path")
-
-            result = creator.copy_ai_templates()
-            # Should return True because it gracefully handles missing templates
-            assert result is True
+            
+            # Mock the ai_copilots configuration
+            with mock.patch.object(creator.template_resolver, "config", {"ai_copilots": {
+                "cursor": ".cursor/rules",
+                "cline": ".clinerules"
+            }}):
+                result = creator.copy_ai_templates()
+                # Should return True because it gracefully handles missing templates
+                assert result is True
 
 
 class TestErrorHandling:
