@@ -5,14 +5,14 @@
 
 ## 2. Core Commands
 You MUST use `uv run` to run any commands. 
-- **Lint & Fix**: `uv run ruff check --fix .`
-- **Format**: `uv run ruff format .`
+- **Lint & Fix**: `make lint`
+- **Format**: `make format`
 - **Type Check**: `uv run mypy .`
-- **Run code**: you MUST use uv to run the code. for example `uv run rag_play`
+- **Run code**: you MUST use uv to run the code. for example `uv run ms_ai_assistant.cli`
 
 ## 3. Code Style & Rules
-- **Formatting**: Use `ruff format`. Line length is 88 characters.
-- **Linting**: Use `uv run ruff check`. Rules are configured in `pyproject.toml`.
+- **Formatting**: Use `make format`. Line length is 88 characters.
+- **Linting**: Use `make lint`. Rules are configured in `pyproject.toml`.
 - **Type Hints**: Mandatory for all function signatures. Must pass `mypy` checks. Avoid `typing.Any`.
 - **Docstrings**: Google-style for all public modules, classes, and functions.
 - **Error Handling**: Use `loguru` for logging. Use `@logger.catch` for robust error tracking.
