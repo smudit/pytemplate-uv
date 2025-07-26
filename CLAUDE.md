@@ -1,25 +1,36 @@
-# CLAUDE.md - Guide for agentic assistants working with pytemplate-uv
 
-## Build/Test Commands
-- Install: `pip install -e .[dev]`
-- Lint: `ruff check .`
-- Format: `black .`
-- Type check: `mypy .`
-- Run tests: `pytest`
-- Run single test: `pytest tests/test_file.py::test_function_name`
-- Test with coverage: `pytest --cov=pytemplate`
+## 1. Dependency Management (`uv`)
+- **Environment**: `uv venv` to create, then `source .venv/bin/activate`.
+- **Packages**: `uv sync` to install from `pyproject.toml`. `uv add <package>` to add a new dependency.
 
-## Code Style
-- **Formatting**: Black with 100 char line length
-- **Linting**: Ruff with rules E,W,F,I,B,UP,C90,N,D
-- **Types**: All functions must have type hints; avoid `Any`
-- **Imports**: Use isort (via ruff); stdlib first, then third-party, then local
-- **Documentation**: Google-style docstrings for all functions/classes
-- **Error handling**: Use loguru for logging errors; `@logger.catch` for tracking
-- **Naming**: Follow PEP8; snake_case for vars/functions, PascalCase for classes
-- **Organization**: Keep files under 500 lines; one class per file
-- **Libraries**: Use pathlib for paths, typer for CLI, loguru for logging
-- **Testing**: Write tests for all new functionality
+## 2. Core Commands
+You MUST use `uv run` to run any commands. 
+- **Lint & Fix**: `make lint`
+- **Format**: `make format`
+- **Type Check**: `uv run mypy .`
+- **Run code**: you MUST use uv to run the code. for example `uv run ms_ai_assistant.cli`
 
-## Testing and debugging environment
-- Use .venv for testing and debugging
+## 3. Code Style & Rules
+- **Formatting**: Use `make format`. Line length is 88 characters.
+- **Linting**: Use `make lint`. Rules are configured in `pyproject.toml`.
+- **Type Hints**: Mandatory for all function signatures. Must pass `mypy` checks. Avoid `typing.Any`.
+- **Docstrings**: Google-style for all public modules, classes, and functions.
+- **Error Handling**: Use `loguru` for logging. Use `@logger.catch` for robust error tracking.
+- **Naming**: PEP 8 (`snake_case` for functions/variables, `PascalCase` for classes).
+- **Imports**: `isort` is run via `ruff`. Order: stdlib, third-party, then local project modules.
+
+## 4. Configuration (`Dynaconf`)
+- **Usage**: Import the `settings` object from the project's `config.py`. Do not create new instances.
+- **Files**: Settings are loaded from `settings.yaml`, `.secrets.yaml`, and `.env`.
+- **Security**: Never commit secret files (`.secrets.yaml`, `.env`) to version control.
+
+## 5. Key Libraries
+- **Paths**: Use `pathlib` for all filesystem path manipulation.
+- **CLI**: Use `typer` for building command-line interfaces.
+- **Logging**: Use `loguru` for all application logging. Use appropriate log levels (trace, debug, info, success, warning, error, critical)
+
+## 6. Logging
+- **Implementation**: Use `loguru` for comprehensive logging
+- **Message Quality**: Ensure clear, debuggable log messages with proper context
+- **Log Levels**: Use appropriate levels (trace, debug, info, success, warning, error, critical)
+- **Error Tracking**: Use `@logger.catch` for robust error tracking
