@@ -72,9 +72,7 @@ def _validate_template(template: str, resolver: TemplateResolver) -> Path:
         return template_path
     except ValueError as e:
         # Get available templates from config
-        available_templates = list(
-            resolver.config.get("project_scaffolds", {}).keys()
-        )
+        available_templates = list(resolver.config.get("project_scaffolds", {}).keys())
 
         error_msg = f"Template not found! Available templates: {', '.join(available_templates)}"
         logger.error(error_msg)
@@ -519,7 +517,11 @@ class ProjectCreator:
             )
         is_private = github_config.get("repo_private", False)
         private_flag = "--private" if is_private else "--public"
+
+        # Get description from project config
+        description = self.config.get("project", {}).get("description", "")
         logger.debug(f"Repository visibility: {'private' if is_private else 'public'}")
+        logger.debug(f"Repository description: {description}")
 
         try:
             # Initialize local git repo first
@@ -531,6 +533,11 @@ class ProjectCreator:
                 logger.info(f"Changed to project directory: {self.project_path}")
 
                 cmd = ["gh", "repo", "create", repo_name, private_flag, "--source=.", "--push"]
+
+                # Add description if provided
+                if description:
+                    cmd.extend(["--description", description])
+
                 logger.info(f"Running GitHub command: {' '.join(cmd)}")
 
                 subprocess.check_call(cmd)
