@@ -14,13 +14,13 @@ github:
   github_username: "your-github-username"
   repo_private: true
 
+# Libraries typically don't need Docker configuration
 docker:
   docker_image: false
   docker_compose: false
-  use_existing_docker_image: null
 
 devcontainer:
-  add_devcontainer: false
+  enabled: false
 
 development:
   # Testing
@@ -35,8 +35,7 @@ development:
   sphinx_docs_hosting: "readthedocs.io"
   
   # Code Quality
-  use_black: true
-  use_ruff: true
+  use_ruff: true  # Handles both linting and formatting
   use_mypy: true
   use_pre_commit: true
   
@@ -57,11 +56,4 @@ development:
   pypi_badge: true
   pypi_disable_upload: false
 
-service_ports:
-  ports: []
 
-ai:
-  copilots: 
-    - cursor
-    - cline
-  # supported_assistants: [cursor, cline]

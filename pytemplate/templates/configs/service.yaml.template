@@ -20,7 +20,7 @@ docker:
   use_existing_docker_image: null
 
 devcontainer:
-  add_devcontainer: true
+  enabled: true
 
 service_ports:
   ports:
@@ -28,14 +28,14 @@ service_ports:
     - 8081
 
 development:
+  # Testing
   use_pytest: true
-  use_black: true
-  use_ruff: true
+  
+  # Code Quality
+  use_ruff: true  # Handles both linting and formatting
   use_mypy: true
   use_pre_commit: true
-
-ai:
-  copilots: 
-    - cursor
-    - cline
-  # supported_assistants: [cursor, cline]
+  
+  # CLI (services may have CLI tools)
+  command_line_interface: "no"  # Options: "no", "plain", "argparse", "click", "typer"
+  command_line_bin_name: ""  # Only used if command_line_interface is not "no"

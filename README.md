@@ -25,12 +25,14 @@ PyTemplate UV is a powerful CLI tool for creating Python project templates using
 To install the project creator tool:
 
 1. Create and activate a virtual environment:
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows use: venv\Scripts\activate
    ```
 
 2. Install the tool:
+
    ```bash
    pip install -e .
    ```
@@ -40,6 +42,7 @@ To install the project creator tool:
 ## Usage
 
 PyTemplate UV uses a two-step process for project creation:
+
 1. Create a configuration file that specifies project requirements
 2. Generate the project structure from the configuration
 
@@ -87,6 +90,11 @@ PyTemplate UV uses three types of templates:
 
 3. **Shared Resources** (`shared_resources/`): Common files copied to projects
    - `coding_rules.md`: Coding guidelines for AI assistants
+   - AI copilot files are automatically configured for:
+     - Cursor (`.cursor/rules`)
+     - Cline (`.clinerules`)
+     - Augment (`.augment-guidelines`)
+     - Claude (`CLAUDE.md`)
 
 ### Project Types
 
@@ -118,13 +126,17 @@ PyTemplate UV uses three types of templates:
 
 1. Clone the repository
 2. Create a virtual environment:
+
    ```bash
    uv venv
    source .venv/bin/activate
    ```
 
 3. Install development dependencies:
+
    ```bash
+   uv sync  # Install all dependencies from pyproject.toml
+   # Or install with development extras
    uv pip install -e .[dev]
    ```
 
@@ -135,6 +147,7 @@ The project uses pytest for testing. The test suite includes comprehensive tests
 #### Setting Up Test Environment
 
 1. Create a dedicated test virtual environment:
+
    ```bash
    # Using uv
    uv venv .venv-test
@@ -148,6 +161,7 @@ The project uses pytest for testing. The test suite includes comprehensive tests
    ```
 
 2. Run tests using the specific virtual environment:
+
    ```bash
    # Using the activated virtual environment
    pytest
@@ -200,6 +214,7 @@ pytest -k "test_create_project"
 #### Test Coverage
 
 The test suite comprehensively covers:
+
 - All CLI commands and their options
 - Configuration validation and loading
 - Template resolution with new naming convention
@@ -207,12 +222,17 @@ The test suite comprehensively covers:
 - Edge cases and security scenarios
 - Integration tests for end-to-end workflows
 
-### Linting
+### Linting and Type Checking
 
 ```bash
-ruff check .
-black .
-mypy .
+# Run all linting and formatting
+make lint      # Run ruff linter
+make format    # Run ruff formatter
+
+# Or run individually
+ruff check .   # Lint code
+ruff format .  # Format code
+mypy .         # Type checking (requires mypy>=1.15.0)
 ```
 
 ## Contributing
@@ -231,8 +251,8 @@ Leo Liu - [GitHub](https://github.com/yuxuzi)
 
 *Simplifying Python project creation with modern best practices* 🐍✨
 
+# TODO
 
- # TODO
- - [] Add .gitignore to shared resources 
- - [] Add CLAUDE.md to ai rules
- - [] Fix not creating git if add_on_github is false
+- [] Add .gitignore to shared resources
+- [] Add CLAUDE.md to ai rules
+- [] Fix not creating git if add_on_github is false

@@ -282,7 +282,7 @@ class ProjectCreator:
         """Validate development settings."""
         dev_settings = self.config.get("development", {})
         cli_interface = dev_settings.get("command_line_interface", "no")
-        valid_cli_options = ["no", "click", "argparse", "plain"]
+        valid_cli_options = ["no", "click", "argparse", "plain", "typer"]
 
         if cli_interface not in valid_cli_options:
             logger.error(f"Invalid command line interface option: {cli_interface}")

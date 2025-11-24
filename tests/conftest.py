@@ -104,12 +104,6 @@ def sample_lib_config(temp_config_dir: Path) -> Path:
         "github": {"add_on_github": False, "repo_name": "test-lib", "repo_private": False},
         "docker": {"docker_image": False, "docker_compose": False},
         "devcontainer": {"enabled": False},
-        "ai": {
-            "copilots": {
-                "cursor_rules_path": ".cursor/rules/coding_rules.md",
-                "cline_rules_path": ".clinerules",
-            }
-        },
     }
 
     config_path = temp_config_dir / "lib_config.yaml"
@@ -284,8 +278,6 @@ docker:
   docker_compose: false
 devcontainer:
   enabled: false
-ai:
-  copilots: {{}}
 """
         template_file.write_text(template_content)
 
@@ -304,6 +296,12 @@ ai:
         },
         "shared_resources": {
             "coding_rules": str(temp_templates_dir / "shared" / "coding_rules.md"),
+        },
+        "ai_copilots": {
+            "cursor": ".cursor/rules",
+            "cline": ".clinerules",
+            "augment": ".augment-guidelines",
+            "claude": "CLAUDE.md"
         },
     }
 
@@ -463,12 +461,6 @@ def sample_service_config(temp_config_dir: Path) -> Path:
         "docker": {"docker_image": True, "docker_compose": True},
         "devcontainer": {"enabled": True},
         "service_ports": {"ports": ["8000", "8080"]},
-        "ai": {
-            "copilots": {
-                "cursor_rules_path": ".cursor/rules/coding_rules.md",
-                "cline_rules_path": ".clinerules",
-            }
-        },
     }
 
     config_path = temp_config_dir / "service_config.yaml"
@@ -503,12 +495,6 @@ def sample_workspace_config(temp_config_dir: Path) -> Path:
         "github": {"add_on_github": True, "repo_name": "test-workspace", "repo_private": False},
         "docker": {"docker_image": False, "docker_compose": False},
         "devcontainer": {"enabled": True},
-        "ai": {
-            "copilots": {
-                "cursor_rules_path": ".cursor/rules/coding_rules.md",
-                "cline_rules_path": ".clinerules",
-            }
-        },
     }
 
     config_path = temp_config_dir / "workspace_config.yaml"
