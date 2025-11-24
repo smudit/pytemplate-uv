@@ -63,9 +63,7 @@ def test_create_project_from_config_invalid_path(temp_project_dir: Path) -> None
         # Configure the mock to raise typer.Exit like the real load_config method
         import typer
 
-        mock_creator.return_value.create_project_from_config.side_effect = typer.Exit(
-            f"Config file not found: [Errno 2] No such file or directory: '{invalid_path}'"
-        )
+        mock_creator.return_value.create_project_from_config.side_effect = typer.Exit(code=1)
 
         result = runner.invoke(app, ["create-project-from-config", str(invalid_path)])
 

@@ -40,12 +40,12 @@ def _setup_loguru_to_python_logging():
 
 
 @pytest.fixture
-def temp_project_dir() -> str:
+def temp_project_dir() -> Generator[str, None, None]:
     """Create a temporary directory for project creation.
 
     Returns
     -------
-        str: Path to the temporary directory
+        Generator[str, None, None]: Path to the temporary directory
 
     """
     with tempfile.TemporaryDirectory() as tmpdir:

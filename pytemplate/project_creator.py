@@ -205,7 +205,7 @@ class ProjectCreator:
         self.project_path: Path | None = None
 
         # Initialize template management
-        self.template_resolver = TemplateResolver(TEMPLATE_PATHS_FILE)
+        self.template_resolver = TemplateResolver(str(TEMPLATE_PATHS_FILE))
         self.template_manager = TemplateManager(self.template_resolver)
         logger.debug("ProjectCreator initialization complete")
 
@@ -232,13 +232,13 @@ class ProjectCreator:
             # For CLI usage, raise typer.Exit, but for testing allow the original exception
             if hasattr(self, "_testing_mode") and self._testing_mode:
                 raise
-            raise typer.Exit(f"Config file not found: {str(e)}") from e
+            raise typer.Exit(code=1) from e
         except yaml.YAMLError as e:
             logger.error(f"Error parsing YAML: {e}")
             # For CLI usage, raise typer.Exit, but for testing allow the original exception
             if hasattr(self, "_testing_mode") and self._testing_mode:
                 raise
-            raise typer.Exit(f"Error parsing YAML: {str(e)}") from e
+            raise typer.Exit(code=1) from e
 
         if not self.validate_config():
             logger.error("Invalid configuration")
@@ -255,7 +255,7 @@ class ProjectCreator:
                     for field in project_required:
                         if field not in self.config["project"]:
                             raise KeyError(f"Missing required project field: {field}")
-            raise typer.Exit("Invalid configuration")
+            raise typer.Exit(code=1)
 
         logger.info("Configuration loaded and validated successfully")
         return True
@@ -610,6 +610,10 @@ class ProjectCreator:
             bool: True if successful, False otherwise.
 
         """
+        if self.project_path is None:
+            logger.error("Project path is not set")
+            return False
+
         try:
             full_path = self.project_path / target_path
             full_path.parent.mkdir(parents=True, exist_ok=True)

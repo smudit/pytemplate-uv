@@ -17,7 +17,6 @@ app = typer.Typer(
     name="pytemplate-uv",
     help="Create Python projects from templates using uv package manager",
     add_completion=True,
-    rich_help_panel=True,
 )
 
 
@@ -52,7 +51,7 @@ def create_project_from_config(
             logger.info("Operation cancelled.")
             raise typer.Exit(code=1)
 
-    creator = ProjectCreator(config_path, interactive)
+    creator = ProjectCreator(str(config_path), interactive)
     if not creator.create_project_from_config(force=force):
         raise typer.Exit(code=1)
     logger.info("Project creation completed")
@@ -78,7 +77,7 @@ def create_config(
 ) -> None:
     """Create a default configuration file for the specified project type."""
     validate_project_type(project_type)
-    output_path = Path(output_path)
+    output_file = Path(output_path)
 
     try:
         resolver = TemplateResolver()
@@ -87,9 +86,9 @@ def create_config(
             config_template_path = resolver.get_template_path("config_specs", project_type)
 
             if config_template_path.exists():
-                output_path.write_text(config_template_path.read_text())
+                output_file.write_text(config_template_path.read_text())
                 logger.success(
-                    f"Created {project_type} configuration from template at: {output_path}"
+                    f"Created {project_type} configuration from template at: {output_file}"
                 )
             else:
                 logger.error(f"Configuration template not found: {config_template_path}")
