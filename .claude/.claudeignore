@@ -1,0 +1,94 @@
+# Claude Code Ignore Patterns
+# Files and directories that Claude should not read to save context
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+*.egg-info/
+*.egg
+.tox/
+.coverage
+htmlcov/
+.coverage.*
+
+# Secrets and Environment
+.env
+.env.*
+.secrets*
+secrets/
+*.key
+*.pem
+*.cer
+*.crt
+credentials.json
+service-account.json
+
+# Build artifacts
+dist/
+build/
+*.so
+*.dylib
+*.dll
+*.o
+*.a
+*.lib
+*.exe
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation artifacts
+docs/code_reviews/
+docs/plans/
+
+# Git
+.git/
+
+# Large data files
+*.parquet
+*.csv
+*.tsv
+*.json.gz
+*.tar.gz
+*.zip
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# Node modules (if any JS tooling)
+node_modules/
+
+# Compiled documentation
+_build/
+.doctrees/

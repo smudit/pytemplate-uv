@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir uv && \
 
 # Copy only the files needed for dependency installation
 COPY pyproject.toml Makefile ./
-COPY {{cookiecutter.project_name}} ./{{cookiecutter.project_name}}
+COPY {{cookiecutter.package_name}} ./{{cookiecutter.package_name}}
 
 # Use uv to install dependencies
 RUN uv pip install --system .
@@ -24,7 +24,7 @@ RUN adduser --disabled-password --gecos '' appuser && \
 
 # Copy the installed dependencies and project files
 COPY --from=builder /usr/local/lib/python*/site-packages /usr/local/lib/python*/site-packages/
-COPY {{cookiecutter.project_name}} ./{{cookiecutter.project_name}}
+COPY {{cookiecutter.package_name}} ./{{cookiecutter.package_name}}
 COPY pyproject.toml Makefile ./
 
 # Switch to non-root user

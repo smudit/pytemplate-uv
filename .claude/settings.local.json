@@ -1,0 +1,17 @@
+{
+  "_comment": "Local environment-specific settings. This file overrides settings.json.",
+  "_comment2": "Only add settings here that differ from your default settings.json.",
+  "_comment3": "Common use: machine-specific paths, local tool configurations, personal preferences.",
+  "permissions": {
+    "allow": [],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./.secrets.yaml)",
+      "Read(./secrets/**)",
+      "Read(./.secrets.*)",
+      "Read(./secrets/*)"
+    ],
+    "ask": []
+  }
+}

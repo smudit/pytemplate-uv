@@ -8,9 +8,14 @@ from loguru import logger
 logger.remove()
 
 # Configure logger with rotation
+LOG_FORMAT = (
+    "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+)
+
 logger.add(
     "project_creation.log",
-    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+    format=LOG_FORMAT,
     level="DEBUG",
     rotation="10 MB",
 )
@@ -19,7 +24,7 @@ logger.add(
 logger.add(
     sys.stdout,
     colorize=True,
-    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+    format=LOG_FORMAT,
     level="DEBUG",
 )
 

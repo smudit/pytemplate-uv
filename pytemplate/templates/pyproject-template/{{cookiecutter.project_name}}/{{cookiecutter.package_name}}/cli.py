@@ -9,8 +9,8 @@ from rich.table import Table
 app = typer.Typer(
     name="{{cookiecutter.package_name}}",
     help="CLI for {{cookiecutter.project_name}}",
-    rich_help_panel=True,
     no_args_is_help=True,
+    rich_markup_mode="rich",
 )
 console = Console()
 

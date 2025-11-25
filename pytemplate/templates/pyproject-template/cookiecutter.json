@@ -1,6 +1,6 @@
 {
     "project_name": "my-python-project",
-    "package_name": "{{cookiecutter.project_name|lower|replace('-', '_')}}",
+    "package_name": "{{cookiecutter.project_name|lower|replace('-', '_')|replace(' ', '_')|replace('.', '_')}}",
     "description": "A Python project template",
     "author": "{{ cookiecutter.get('author', 'Your Name') }}",
     "email": "{{ cookiecutter.get('email', 'your@email.com') }}",

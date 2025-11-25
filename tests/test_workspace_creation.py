@@ -106,7 +106,6 @@ class TestWorkspaceProjectCreation:
                 Path(temp_project_dir) / "test-workspace"
             ).exists(), "Project directory should be created"
 
-
     def test_create_workspace_project_with_devcontainer(
         self, temp_project_dir: str, sample_workspace_config: Path
     ) -> None:
@@ -199,7 +198,9 @@ class TestWorkspaceProjectCreation:
         # Workspace projects should allow Docker configurations
         assert creator.validate_config() is True
 
-    def test_workspace_cli_creation(self, temp_project_dir: str, sample_workspace_config: Path) -> None:
+    def test_workspace_cli_creation(
+        self, temp_project_dir: str, sample_workspace_config: Path
+    ) -> None:
         """Test workspace project creation via CLI.
 
         Verifies that:
@@ -211,7 +212,7 @@ class TestWorkspaceProjectCreation:
             mock.patch("pytemplate.project_creator._validate_template") as mock_validate,
             mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call,
             mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver,
-            mock.patch("typer.confirm", return_value=True) as mock_confirm,
+            mock.patch("typer.confirm", return_value=True),
         ):
             mock_validate.return_value = Path("templates/pyproject-template")
             mock_check_call.return_value = 0
@@ -407,5 +408,5 @@ class TestWorkspaceErrorHandling:
         creator.load_config()
 
         # Should handle invalid structure gracefully
-        result = creator.create_project_from_config()
+        creator.create_project_from_config()
         # May succeed or fail depending on implementation

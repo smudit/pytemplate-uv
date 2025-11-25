@@ -221,3 +221,25 @@ class TestErrorHandling:
             resolver = TemplateResolver()
             with pytest.raises(ValueError):
                 resolver.get_template_path("nonexistent_type", "template")
+
+    def test_load_config_with_non_dict_entries(self, temp_config_dir: Path):
+        """Test loading config with non-dict entries (like comments/metadata)."""
+        config_path = temp_config_dir / "template_paths.yaml"
+        config_data = {
+            "comment": "This is a comment",  # Non-dict entry
+            "project_scaffolds": {"test": "templates/test"},
+        }
+
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        with mock.patch("pytemplate.template_manager.TEMPLATE_PATHS_FILE", config_path):
+            resolver = TemplateResolver()
+            # Should handle non-dict entries gracefully
+            assert "project_scaffolds" in resolver.config
+            assert "comment" in resolver.config
+
+    def test_init_template_structure_with_nested_templates(self, temp_config_dir: Path):
+        """Test initializing template structure with nested template paths."""
+        # TODO: Requires mocking BASE_DIR to properly test nested template initialization
+        pytest.skip("Generated stub - needs BASE_DIR mocking for nested templates")

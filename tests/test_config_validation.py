@@ -132,7 +132,7 @@ class TestProjectConfigValidation:
 
         creator = ProjectCreator(str(invalid_config))
         # Should handle empty project name appropriately
-        result = creator.create_project_from_config()
+        creator.create_project_from_config()
         # May succeed or fail depending on implementation
 
 
@@ -153,7 +153,7 @@ class TestGitHubConfigValidation:
             "docker": {
                 "docker_image": True,
                 "docker_compose": True,
-                "base_image": "python:3.11-slim"
+                "base_image": "python:3.11-slim",
             },
             "devcontainer": {"enabled": False},
             "ai": {"copilots": {}},
@@ -181,7 +181,7 @@ class TestGitHubConfigValidation:
 
         creator = ProjectCreator(str(config_without_github))
         # Should handle missing GitHub section gracefully
-        result = creator.create_project_from_config()
+        creator.create_project_from_config()
         # May succeed with defaults or fail
 
     def test_invalid_github_boolean_values(self, temp_config_dir: Path):
@@ -245,7 +245,7 @@ class TestDockerConfigValidation:
 
         creator = ProjectCreator(str(config_without_docker))
         # Should handle missing Docker section gracefully
-        result = creator.create_project_from_config()
+        creator.create_project_from_config()
 
 
 class TestAIConfigValidation:
@@ -260,7 +260,7 @@ class TestAIConfigValidation:
             "docker": {
                 "docker_image": True,
                 "docker_compose": True,
-                "base_image": "python:3.11-slim"
+                "base_image": "python:3.11-slim",
             },
             "devcontainer": {"enabled": False},
             "ai": {
@@ -298,7 +298,7 @@ class TestAIConfigValidation:
 
         creator = ProjectCreator(str(config_without_ai))
         # Should handle missing AI section gracefully
-        result = creator.create_project_from_config()
+        creator.create_project_from_config()
 
 
 class TestDevelopmentConfigValidation:
@@ -368,7 +368,7 @@ class TestConfigSchemaCompliance:
 
         creator = ProjectCreator(str(minimal_config))
         # Should handle minimal config with defaults
-        result = creator.create_project_from_config()
+        creator.create_project_from_config()
 
     def test_config_with_extra_fields(self, temp_config_dir: Path):
         """Test configuration with extra unknown fields."""

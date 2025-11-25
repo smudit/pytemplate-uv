@@ -103,13 +103,7 @@ def test_create_lib_with_dev_settings(
     with mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
         mock_resolver.return_value.get_template_path.return_value = template_dir
         mock_resolver.return_value.config = {
-            "template_paths": {
-                "templates": {
-                    "project_templates": {
-                        "pylibrary": str(template_dir)
-                    }
-                }
-            }
+            "template_paths": {"templates": {"project_templates": {"pylibrary": str(template_dir)}}}
         }
 
         result = runner.invoke(
@@ -150,13 +144,7 @@ def test_create_lib_with_custom_settings(
     with mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
         mock_resolver.return_value.get_template_path.return_value = template_dir
         mock_resolver.return_value.config = {
-            "template_paths": {
-                "templates": {
-                    "project_templates": {
-                        "pylibrary": str(template_dir)
-                    }
-                }
-            }
+            "template_paths": {"templates": {"project_templates": {"pylibrary": str(template_dir)}}}
         }
 
         # Modify config to use custom settings
@@ -244,13 +232,7 @@ def test_create_lib_template_resolution(
     with mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
         mock_resolver.return_value.get_template_path.return_value = template_dir
         mock_resolver.return_value.config = {
-            "template_paths": {
-                "templates": {
-                    "project_templates": {
-                        "pylibrary": str(template_dir)
-                    }
-                }
-            }
+            "template_paths": {"templates": {"project_templates": {"pylibrary": str(template_dir)}}}
         }
 
         result = runner.invoke(

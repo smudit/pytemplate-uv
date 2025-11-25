@@ -7,10 +7,11 @@
 
 You MUST use `uv run` to run any commands.
 
-- **Lint & Fix**: `make lint`
-- **Format**: `make format`
+- **Lint & Fix**: `make lint` or `uv run ruff check .`
+- **Format**: `make format` or `uv run black .`
 - **Type Check**: `uv run mypy .`
-- **Run code**: you MUST use uv to run the code. for example `uv run ms_ai_assistant.cli`
+- **Run CLI**: `uv run python -m <package_name>.cli` (replace `<package_name>` with your project's package name)
+- **Run Tests**: `make test` or `uv run pytest`
 
 ## 3. Code Style & Rules
 
@@ -25,7 +26,8 @@ You MUST use `uv run` to run any commands.
 ## 4. Configuration (`Dynaconf`)
 
 - **Usage**: Import the `settings` object from the project's `config.py`. Do not create new instances.
-- **Files**: Settings are loaded from `settings.yaml`, `.secrets.yaml`, and `.env`.
+- **Files**: Settings can be loaded from `settings.yaml`, `.secrets.yaml`, and `.env`. Create these files as needed.
+- **Defaults**: The application provides sensible defaults if config files are missing.
 - **Security**: Never commit secret files (`.secrets.yaml`, `.env`) to version control.
 
 ## 5. Key Libraries

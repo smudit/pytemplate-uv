@@ -142,7 +142,8 @@ class TemplateResolver:
 
         Args:
         ----
-            template_type (str): Type of template (e.g., 'project_scaffolds', 'config_specs', 'shared_resources').
+            template_type (str): Type of template (e.g., 'project_scaffolds',
+                'config_specs', 'shared_resources').
             template_name (str): Name of the template.
 
         Returns:
@@ -220,13 +221,14 @@ class TemplateResolver:
 
         """
         try:
-            # Iterate through template types (e.g., project_scaffolds, config_specs, shared_resources)
-            for template_type, template_group in self.config.items():
+            # Iterate through template types (e.g., project_scaffolds, config_specs,
+            # shared_resources)
+            for _template_type, template_group in self.config.items():
                 # Skip non-dict entries (like comments or metadata)
                 if not isinstance(template_group, dict):
                     continue
 
-                for template_name, relative_path in template_group.items():
+                for _template_name, relative_path in template_group.items():
                     if isinstance(relative_path, dict):
                         # Handle nested templates (like dev_templates)
                         for _, nested_path in relative_path.items():

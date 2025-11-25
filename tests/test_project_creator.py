@@ -68,7 +68,6 @@ class TestConfigLoading:
             creator.load_config()
 
 
-
 class TestLibraryProjectCreation:
     """Test library project creation."""
 
@@ -129,9 +128,11 @@ class TestServiceProjectCreation:
         - Project directory is created
         - Basic service structure is created
         """
-        with mock.patch("pytemplate.project_creator._validate_template") as mock_validate, \
-             mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call, \
-             mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
+        with (
+            mock.patch("pytemplate.project_creator._validate_template") as mock_validate,
+            mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call,
+            mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver,
+        ):
             mock_validate.return_value = Path("templates/pyproject-template")
             mock_check_call.return_value = 0
             mock_resolver.return_value.get_template_path.return_value = Path(
@@ -156,9 +157,11 @@ class TestServiceProjectCreation:
         - Project directory is created
         - Addons are properly configured
         """
-        with mock.patch("pytemplate.project_creator._validate_template") as mock_validate, \
-             mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call, \
-             mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
+        with (
+            mock.patch("pytemplate.project_creator._validate_template") as mock_validate,
+            mock.patch("pytemplate.project_creator.subprocess.check_call") as mock_check_call,
+            mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver,
+        ):
             mock_validate.return_value = Path("templates/pyproject-template")
             mock_check_call.return_value = 0
             mock_resolver.return_value.get_template_path.return_value = Path(
@@ -322,12 +325,18 @@ class TestAITemplateIntegration:
             mock_get_path.return_value = rules_template
 
             # Mock the ai_copilots configuration from template_paths.yaml with updated structure
-            with mock.patch.object(creator.template_resolver, "config", {"ai_copilots": {
-                "cursor": ".cursor/rules",
-                "cline": ".clinerules",
-                "augment": ".augment-guidelines",
-                "claude": "CLAUDE.md"
-            }}):
+            with mock.patch.object(
+                creator.template_resolver,
+                "config",
+                {
+                    "ai_copilots": {
+                        "cursor": ".cursor/rules",
+                        "cline": ".clinerules",
+                        "augment": ".augment-guidelines",
+                        "claude": "CLAUDE.md",
+                    }
+                },
+            ):
                 result = creator.copy_ai_templates()
                 assert result is True
 
@@ -369,8 +378,9 @@ class TestAITemplateIntegration:
         the system logs a warning but continues gracefully. This ensures that
         AI rule propagation failures are visible in logs for debugging.
         """
-        from loguru import logger
         import io
+
+        from loguru import logger
 
         creator = ProjectCreator(str(sample_service_config))
         creator.load_config()
@@ -386,12 +396,18 @@ class TestAITemplateIntegration:
             mock_get_path.return_value = Path("/nonexistent/path")
 
             # Mock the ai_copilots configuration with updated structure
-            with mock.patch.object(creator.template_resolver, "config", {"ai_copilots": {
-                "cursor": ".cursor/rules",
-                "cline": ".clinerules",
-                "augment": ".augment-guidelines",
-                "claude": "CLAUDE.md"
-            }}):
+            with mock.patch.object(
+                creator.template_resolver,
+                "config",
+                {
+                    "ai_copilots": {
+                        "cursor": ".cursor/rules",
+                        "cline": ".clinerules",
+                        "augment": ".augment-guidelines",
+                        "claude": "CLAUDE.md",
+                    }
+                },
+            ):
                 result = creator.copy_ai_templates()
                 # Should return True but log a warning about missing template
                 assert result is True
@@ -437,7 +453,7 @@ class TestAITemplateIntegration:
             "cursor": ".cursor/rules",
             "cline": ".clinerules",
             "augment": ".augment-guidelines",
-            "claude": "CLAUDE.md"
+            "claude": "CLAUDE.md",
         }
 
         # Mock valid ai_copilots config
@@ -463,3 +479,20 @@ class TestErrorHandling:
             result = creator.create_project_from_config()
             assert result is False
 
+
+class TestDirectoryOverwriteConfirmation:
+    """Test user confirmation for directory overwriting."""
+
+    def test_directory_exists_user_confirms_overwrite_lib_project(
+        self, temp_project_dir: Path, sample_lib_config: Path
+    ):
+        """Test that user can confirm overwriting existing directory for lib project."""
+        # TODO: Complex mocking needed - requires full cookiecutter flow simulation
+        pytest.skip("Generated stub - needs complex cookiecutter mocking")
+
+    def test_directory_exists_user_declines_overwrite(
+        self, temp_project_dir: Path, sample_lib_config: Path
+    ):
+        """Test that user can decline overwriting existing directory."""
+        # TODO: Complex mocking needed - requires full error handling flow
+        pytest.skip("Generated stub - needs complex error flow mocking")

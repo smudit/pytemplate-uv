@@ -388,7 +388,6 @@ class TestCLIIntegration:
 class TestExternalToolIntegration:
     """Test integration with external tools (when available)."""
 
-
     def test_docker_integration_simulation(self, temp_project_dir: Path, temp_config_dir: Path):
         """Test Docker integration (simulated)."""
         config_data = {

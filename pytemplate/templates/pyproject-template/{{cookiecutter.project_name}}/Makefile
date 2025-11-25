@@ -1,43 +1,23 @@
 # Detect the operating system
 ifeq ($(OS),Windows_NT)
-    VENV_ACTIVATE = .venv\Scripts\activate
-    PYTHON = .venv\Scripts\python
-    RM = rmdir /s /q
+    PYTHON = python
+    RM = del /f /q
+    RMDIR = rmdir /s /q
     MKDIR = mkdir
 else
-    VENV_ACTIVATE = . .venv/bin/activate
-    PYTHON = .venv/bin/python
-    RM = rm -rf
+    PYTHON = python
+    RM = rm -f
+    RMDIR = rm -rf
     MKDIR = mkdir -p
 endif
 
-# Global prerequisite to ensure virtual environment is activated
-.PHONY: venv-activate
-venv-activate:
-	@if [ ! -d ".venv" ]; then \
-		echo "Virtual environment not found. Creating..."; \
-		uv venv; \
-	fi
-	@echo "Activating virtual environment..."
-	@$(VENV_ACTIVATE)
-
-# Apply venv-activate as a global prerequisite
-.PHONY: all
-all: venv-activate
-
-# Define common commands
-PYTEST = pytest
-UV_PIP_INSTALL = uv pip install
-BLACK = black
-RUFF = ruff
-PDOC = pdoc
-BUILD = python -m build
-TWINE = twine
+# Use uv run for all commands to ensure correct venv
+UV_RUN = uv run
 
 # Targets
 .PHONY: help setup dev start run lint lint-fix format format-check test test-cov clean docs build publish
 
-help: venv-activate
+help:
 	@echo " {{cookiecutter.project_name}} - Project Management Commands"
 	@echo ""
 	@echo "Development:"
@@ -67,69 +47,83 @@ help: venv-activate
 	@echo "  make clean    - Remove virtual environment and cache files"
 
 # Setup project dependencies
-setup: venv-activate
-	@echo "Installing dependencies..."
-	$(UV_PIP_INSTALL) -e ".[dev, docs, test]" && pre-commit install
+setup:
+	@echo "Creating virtual environment and installing dependencies..."
+	uv sync
+	$(UV_RUN) pre-commit install
+
+# Development environment setup
+dev: setup
+	@echo "Development environment ready."
 
 # Start the application
-start: venv-activate
+start:
 	@echo "Starting application..."
-	$(PYTHON) -m {{cookiecutter.package_name}}.cli
+	$(UV_RUN) python -m {{cookiecutter.package_name}}.cli
 
 # Alias for start
 run: start
 
 # Linting
-lint: venv-activate
+lint:
 	@echo "Running linter..."
-	$(RUFF) check .
+	$(UV_RUN) ruff check .
 
 # Linting with auto-fix
-lint-fix: venv-activate
+lint-fix:
 	@echo "Running linter with auto-fix..."
-	$(RUFF) check . --fix
+	$(UV_RUN) ruff check . --fix
 
 # Code formatting
-format: venv-activate
+format:
 	@echo "Formatting code with Black..."
-	$(BLACK) .
+	$(UV_RUN) black .
 
 # Check code formatting
-format-check: venv-activate
+format-check:
 	@echo "Checking code formatting..."
-	$(BLACK) . --check
+	$(UV_RUN) black . --check
 
 # Run tests
-test: venv-activate
+test:
 	@echo "Running tests..."
-	$(PYTEST) tests/
+	$(UV_RUN) pytest tests/
 
 # Run tests with coverage
-test-cov: venv-activate
+test-cov:
 	@echo "Running tests with coverage..."
-	$(PYTEST) --cov={{cookiecutter.package_name}} --cov-report=term-missing 
+	$(UV_RUN) pytest --cov={{cookiecutter.package_name}} --cov-report=term-missing
 
 # Clean up virtual environment and cache files
 clean:
 	@echo "Cleaning up..."
-	$(RM) .venv
-	$(RM) .pytest_cache
+ifeq ($(OS),Windows_NT)
+	-$(RMDIR) .venv 2>nul
+	-$(RMDIR) .pytest_cache 2>nul
+	-$(RMDIR) .ruff_cache 2>nul
+	-$(RMDIR) .mypy_cache 2>nul
+	-$(RM) .coverage 2>nul
+	-for /d /r . %%d in (__pycache__) do @if exist "%%d" $(RMDIR) "%%d"
+else
+	$(RMDIR) .venv
+	$(RMDIR) .pytest_cache
+	$(RMDIR) .ruff_cache
+	$(RMDIR) .mypy_cache
 	$(RM) .coverage
-	find . -type d -name "__pycache__" -exec $(RM) {} +
+	find . -type d -name "__pycache__" -exec $(RMDIR) {} + 2>/dev/null || true
+endif
 
 # Generate documentation
-docs: venv-activate
+docs:
 	@echo "Generating documentation..."
-	$(PDOC) -o docs {{cookiecutter.package_name}}
+	$(UV_RUN) pdoc -o docs {{cookiecutter.package_name}}
 
 # Build distribution packages
-build: venv-activate
+build:
 	@echo "Building distribution packages..."
-	$(UV_PIP_INSTALL) build
-	$(BUILD)
+	$(UV_RUN) python -m build
 
 # Publish to PyPI
 publish: build
 	@echo "Publishing to PyPI..."
-	$(UV_PIP_INSTALL) $(TWINE)
-	$(TWINE) upload dist/*
+	$(UV_RUN) twine upload dist/*

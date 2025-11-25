@@ -121,9 +121,7 @@ class TestProjectTypeValidation:
             result = runner.invoke(app, ["create-config", "LIB"])
             assert result.exit_code == 0
             # Verify that the callback converted to lowercase
-            mock_resolver.return_value.get_template_path.assert_called_with(
-                "config_specs", "lib"
-            )
+            mock_resolver.return_value.get_template_path.assert_called_with("config_specs", "lib")
 
 
 class TestErrorHandling:
@@ -157,5 +155,3 @@ class TestErrorHandling:
             result = runner.invoke(app, ["create-config", "lib"])
             assert result.exit_code == 1
             assert "Configuration template not found in template_paths.yaml" in result.output
-
-

@@ -227,7 +227,7 @@ class TestFilePermissions:
         with mock.patch("tempfile.mkdtemp") as mock_mkdtemp:
             mock_mkdtemp.return_value = str(temp_config_dir / "secure_temp")
 
-            creator = ProjectCreator(str(config_path))
+            ProjectCreator(str(config_path))
 
             # Verify that temporary directories are created with appropriate permissions
             if mock_mkdtemp.called:

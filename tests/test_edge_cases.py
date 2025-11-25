@@ -20,7 +20,6 @@ runner = CliRunner()
 class TestConfigurationEdgeCases:
     """Test edge cases in configuration handling."""
 
-
     def test_config_with_null_values(self, temp_config_dir: Path):
         """Test handling of config with null values."""
         null_config = temp_config_dir / "null.yaml"
@@ -60,7 +59,7 @@ class TestConfigurationEdgeCases:
 
         creator = ProjectCreator(str(special_config))
         # Should handle special characters gracefully
-        result = creator.create_project_from_config()
+        creator.create_project_from_config()
         # May succeed or fail depending on implementation
 
 
@@ -78,7 +77,7 @@ class TestFileSystemEdgeCases:
 
         try:
             with mock.patch("os.getcwd", return_value=str(readonly_dir)):
-                result = creator.create_project_from_config()
+                creator.create_project_from_config()
                 # Should handle read-only directory gracefully
         finally:
             # Restore permissions for cleanup
@@ -115,7 +114,7 @@ class TestFileSystemEdgeCases:
 
         creator = ProjectCreator(str(long_config))
         # Should handle long paths appropriately
-        result = creator.create_project_from_config()
+        creator.create_project_from_config()
         # May succeed or fail depending on OS limits
 
 
@@ -134,8 +133,8 @@ class TestConcurrencyEdgeCases:
                 FileExistsError("Directory already exists"),  # Second call fails
             ]
 
-            result1 = creator1.create_project_from_config()
-            result2 = creator2.create_project_from_config()
+            creator1.create_project_from_config()
+            creator2.create_project_from_config()
 
             # One should succeed, one should handle the conflict
 
@@ -220,7 +219,7 @@ class TestCLIEdgeCases:
         with open(unicode_config, "w", encoding="utf-8") as f:
             yaml.dump(config_data, f, allow_unicode=True)
 
-        result = runner.invoke(app, ["create-project-from-config", str(unicode_config)])
+        runner.invoke(app, ["create-project-from-config", str(unicode_config)])
         # Should handle unicode gracefully
 
     def test_cli_with_very_long_arguments(self, temp_config_dir: Path):
@@ -240,7 +239,7 @@ class TestCLIEdgeCases:
             with open(long_path, "w") as f:
                 yaml.dump(config_data, f)
 
-            result = runner.invoke(app, ["create-project-from-config", str(long_path)])
+            runner.invoke(app, ["create-project-from-config", str(long_path)])
             # Should handle long paths appropriately
         except OSError:
             # Skip if filesystem doesn't support long filenames
@@ -260,7 +259,7 @@ class TestCLIEdgeCases:
         ) as mock_create:
             mock_create.side_effect = KeyboardInterrupt("User interrupted")
 
-            result = runner.invoke(app, ["create-project-from-config", str(sample_lib_config)])
+            runner.invoke(app, ["create-project-from-config", str(sample_lib_config)])
             # Should handle interrupts gracefully
 
 
@@ -276,7 +275,7 @@ class TestEnvironmentEdgeCases:
                 del os.environ["PATH"]
 
             creator = ProjectCreator(str(sample_lib_config))
-            result = creator.create_project_from_config()
+            creator.create_project_from_config()
             # Should handle missing environment variables
         finally:
             if original_path:

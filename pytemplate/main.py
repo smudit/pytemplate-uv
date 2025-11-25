@@ -21,6 +21,7 @@ app = typer.Typer(
 
 
 def path_callback(value: str) -> Path:
+    """Convert string to Path object for Typer CLI."""
     return Path(value)
 
 

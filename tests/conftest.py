@@ -16,6 +16,7 @@ class PropagateHandler(logging.Handler):
     """A handler that routes Loguru messages to Python's standard logging."""
 
     def emit(self, record):
+        """Route Loguru messages to Python's standard logging."""
         # Use whatever logger name you want. Typically, Loguru logs have `record.name == 'loguru'`.
         logging.getLogger(record.name).handle(record)
 
@@ -163,7 +164,7 @@ def temp_templates_dir(temp_config_dir: Path) -> Generator[Path, None, None]:
     [build-system]
     requires = ["setuptools>=61.0"]
     build-backend = "setuptools.build_meta"
-    
+
     [project]
     name = "{{cookiecutter.project_name}}"
     version = "0.1.0"
@@ -205,11 +206,11 @@ def temp_templates_dir(temp_config_dir: Path) -> Generator[Path, None, None]:
     [build-system]
     requires = ["setuptools>=61.0"]
     build-backend = "setuptools.build_meta"
-    
+
     [project]
     name = "{{cookiecutter.project_name}}"
     version = "0.1.0"
-    
+
     [dependencies]
     fastapi = "^0.95.0"
     """)
@@ -301,7 +302,7 @@ devcontainer:
             "cursor": ".cursor/rules",
             "cline": ".clinerules",
             "augment": ".augment-guidelines",
-            "claude": "CLAUDE.md"
+            "claude": "CLAUDE.md",
         },
     }
 
@@ -394,22 +395,28 @@ def mock_cookiecutter(monkeypatch):
         docker_config = extra_context.get("docker", {})
         if isinstance(docker_config, dict):
             if docker_config.get("docker_image"):
-                (project_path / "Dockerfile").write_text(
-                    "FROM python:3.11-slim\nWORKDIR /app\nCOPY . .\nRUN pip install .\nCMD ['python', '-m', 'package']\n"
+                dockerfile_content = (
+                    "FROM python:3.11-slim\nWORKDIR /app\nCOPY . .\n"
+                    "RUN pip install .\nCMD ['python', '-m', 'package']\n"
                 )
+                (project_path / "Dockerfile").write_text(dockerfile_content)
             if docker_config.get("docker_compose"):
-                (project_path / "docker-compose.yml").write_text(
-                    "version: '3.8'\nservices:\n  app:\n    build: .\n    ports:\n      - '8000:8000'\n"
+                compose_content = (
+                    "version: '3.8'\nservices:\n  app:\n    build: .\n"
+                    "    ports:\n      - '8000:8000'\n"
                 )
+                (project_path / "docker-compose.yml").write_text(compose_content)
 
         # Create devcontainer files if enabled
         devcontainer_config = extra_context.get("devcontainer", {})
         if isinstance(devcontainer_config, dict) and devcontainer_config.get("enabled"):
             devcontainer_dir = project_path / ".devcontainer"
             devcontainer_dir.mkdir(parents=True, exist_ok=True)
-            (devcontainer_dir / "devcontainer.json").write_text(
-                '{\n  "name": "Python 3",\n  "image": "mcr.microsoft.com/devcontainers/python:3.11"\n}\n'
+            devcontainer_content = (
+                '{\n  "name": "Python 3",\n'
+                '  "image": "mcr.microsoft.com/devcontainers/python:3.11"\n}\n'
             )
+            (devcontainer_dir / "devcontainer.json").write_text(devcontainer_content)
 
         return str(project_path)
 

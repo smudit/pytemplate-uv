@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /Users/mudits/workspace/ms/ai/ms_ai_assistant && uv run pytest:*)",
+      "Bash(cd:*)",
+      "Bash(make format:*)",
+      "Bash(make lint:*)",
+      "Bash(make format-check)",
+      "Bash(make lint-fix)",
+      "Bash(make test)",
+      "Bash(make test-cov)",
+      "Bash(uv run ruff:*)",
+      "Bash(uv run black:*)",
+      "Bash(uv run mypy:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run ms_ai_assistant.cli:*)",
+      "Bash(uv sync)",
+      "Bash(uv add:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(pwd)",
+      "Bash(which:*)",
+      "Bash(git diff:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./.secrets.yaml)",
+      "Read(./secrets/**)",
+      "Read(./.secrets.*)",
+      "Read(./secrets/*)"
+    ],
+    "ask": [],
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "ms_ai_assistant"
+    ]
+  }
+}

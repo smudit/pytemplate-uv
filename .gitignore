@@ -85,3 +85,4 @@ uv.lock
 version.py
 .aider*
 .qodo
+docs/code_reviews/*
