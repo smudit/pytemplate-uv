@@ -1,0 +1,18 @@
+# Environment Configuration for {{cookiecutter.project_name}}
+# Copy this file to {{cookiecutter.envfile}} and customize for your environment
+# NEVER commit {{cookiecutter.envfile}} with real secrets to version control!
+
+# Application Environment
+ENVIRONMENT=development
+DEBUG=false
+
+# Dynaconf Settings
+DYNACONF_ENVIRONMENT=development
+
+# Logging
+LOG_LEVEL=INFO
+
+# Add your environment-specific variables below
+# DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+# REDIS_URL=redis://localhost:6379/0
+# API_KEY=your-api-key-here

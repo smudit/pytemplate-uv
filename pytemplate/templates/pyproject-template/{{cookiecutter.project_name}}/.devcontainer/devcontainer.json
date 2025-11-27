@@ -1,0 +1,51 @@
+{
+    "name": "{{cookiecutter.project_name}}",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.analysis.typeCheckingMode": "basic",
+                "python.formatting.provider": "none",
+                "[python]": {
+                    "editor.formatOnSave": true,
+                    "editor.defaultFormatter": "charliermarsh.ruff",
+                    "editor.codeActionsOnSave": {
+                        "source.fixAll": "explicit",
+                        "source.organizeImports": "explicit"
+                    }
+                },
+                "ruff.organizeImports": true,
+                "ruff.fixAll": true,
+                "files.trimTrailingWhitespace": true,
+                "files.insertFinalNewline": true
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "charliermarsh.ruff",
+                "ms-python.mypy-type-checker",
+                "tamasfe.even-better-toml",
+                "redhat.vscode-yaml",
+                "GitHub.copilot",
+                "eamodio.gitlens"
+            ]
+        }
+    },
+    "postCreateCommand": "uv sync --all-extras && pre-commit install",
+    "remoteUser": "vscode",
+    "forwardPorts": [{{cookiecutter.primary_port}}],
+    "portsAttributes": {
+        "{{cookiecutter.primary_port}}": {
+            "label": "Application",
+            "onAutoForward": "notify"
+        }
+    }
+}

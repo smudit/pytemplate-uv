@@ -13,7 +13,7 @@ from cookiecutter.main import cookiecutter
 
 from .constants import TEMPLATE_PATHS_FILE
 from .logger import logger
-from .template_manager import TemplateManager, TemplateResolver
+from .template_manager import TemplateResolver
 
 
 def _validate_template(template: str, resolver: TemplateResolver) -> Path:
@@ -206,7 +206,6 @@ class ProjectCreator:
 
         # Initialize template management
         self.template_resolver = TemplateResolver(str(TEMPLATE_PATHS_FILE))
-        self.template_manager = TemplateManager(self.template_resolver)
         logger.debug("ProjectCreator initialization complete")
 
     def enable_testing_mode(self):
@@ -392,10 +391,30 @@ class ProjectCreator:
                     logger.info("GitHub repository creation requested")
                     if not self.create_github_repo():
                         return False
+
+                # Copy AI copilot templates for lib projects
+                copilots = self._get_copilots_config()
+                if copilots:
+                    logger.info(f"Found {len(copilots)} AI copilot configurations")
+                    if not self.copy_ai_templates():
+                        return False
+
                 logger.info(f"Project created successfully at {self.project_path}")
                 return True
 
             # For non-lib project types (service, workspace), add project structure and addons
+            # Get development settings with defaults
+            dev_settings = self.config.get("development", {})
+
+            # Helper to convert bool to "y"/"n" for cookiecutter
+            def bool_to_yn(value: bool, default: bool = True) -> str:
+                return "y" if value else "n"
+
+            # Extract primary port from service_ports config
+            service_ports_config = self.config.get("service_ports", {"ports": [8000]})
+            ports_list = service_ports_config.get("ports", [8000])
+            primary_port = ports_list[0] if ports_list else 8000
+
             context = {
                 "project_name": project_name,
                 "project_type": project_type,
@@ -405,9 +424,18 @@ class ProjectCreator:
                 "version": self.config.get("version", "0.1.0"),
                 "python_version": self.config["project"].get("python_version", "3.11"),
                 "github": self.config["github"],
+                "github_username": self.config["github"].get("github_username", ""),
                 "docker": self.config["docker"],
                 "devcontainer": self.config["devcontainer"],
-                "service_ports": self.config.get("service_ports", {"ports": ["8000"]}),
+                "service_ports": service_ports_config,
+                "primary_port": str(primary_port),
+                # Development settings mapped to cookiecutter variables
+                "mypy": bool_to_yn(dev_settings.get("use_mypy", True)),
+                "coverage": bool_to_yn(dev_settings.get("use_pytest", True)),
+                "docs": bool_to_yn(dev_settings.get("docs", True)),
+                "dockerfile": bool_to_yn(self.config.get("docker", {}).get("docker_image", True)),
+                "license": self.config["project"].get("license", "MIT"),
+                "envfile": dev_settings.get("envfile", ".env"),
             }
             logger.debug(f"Project context: {context}")
 
@@ -441,7 +469,10 @@ class ProjectCreator:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to create project addons: {str(e)}")
+            logger.exception(f"Failed to create project: {str(e)}")
+            # Re-raise in testing mode for proper exception propagation
+            if hasattr(self, "_testing_mode") and self._testing_mode:
+                raise
             return False
 
     def initialize_local_git_repo(self) -> bool:
@@ -458,30 +489,40 @@ class ProjectCreator:
 
         if not (self.project_path / ".git").exists():
             logger.info("Initializing local git repository with main branch...")
+            current_dir = os.getcwd()
             try:
-                # Save current directory
-                current_dir = os.getcwd()
                 os.chdir(self.project_path)
 
-                # Initialize git repo
-                subprocess.check_call(["git", "init"])
-                # Set default branch to main
-                subprocess.check_call(["git", "checkout", "-b", "main"])
+                # Initialize git repo - try new syntax first, fall back for older git
+                use_fallback = False
+                try:
+                    # Try Git >= 2.28 syntax: git init -b main
+                    subprocess.check_call(
+                        ["git", "init", "-b", "main"],
+                        stderr=subprocess.DEVNULL,
+                    )
+                except subprocess.CalledProcessError:
+                    # Git < 2.28: init with default branch, rename after commit
+                    use_fallback = True
+                    subprocess.check_call(["git", "init"])
+
                 subprocess.check_call(["git", "add", "."])
                 subprocess.check_call(["git", "commit", "-m", "Initial commit"])
 
-                # Return to original directory
-                os.chdir(current_dir)
+                # For older Git: rename branch to main after commit (avoids broken state)
+                if use_fallback:
+                    subprocess.check_call(["git", "branch", "-M", "main"])
+
                 logger.info("Local git repository initialized successfully")
                 return True
             except subprocess.CalledProcessError as e:
                 logger.error(f"Failed to initialize git repository: {e}")
-                os.chdir(current_dir)
                 return False
             except Exception as e:
                 logger.error(f"Unexpected error during git initialization: {e}")
-                os.chdir(current_dir)
                 return False
+            finally:
+                os.chdir(current_dir)
         else:
             logger.info("Git repository already exists")
             return True

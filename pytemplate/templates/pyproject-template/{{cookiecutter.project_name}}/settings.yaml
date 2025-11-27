@@ -1,0 +1,18 @@
+# Application Settings for {{cookiecutter.project_name}}
+# This file contains default configuration values.
+# Sensitive values should go in .secrets.yaml (not committed to git)
+
+# Logging Configuration
+LOG_LEVEL: "INFO"
+LOG_FILE: "logs/app.log"
+
+# Application Settings
+APP_NAME: "{{cookiecutter.project_name}}"
+DEBUG: false
+ENVIRONMENT: "development"
+
+# Add your application-specific settings below
+# Example:
+# DATABASE_HOST: "localhost"
+# DATABASE_PORT: 5432
+# CACHE_TTL: 300

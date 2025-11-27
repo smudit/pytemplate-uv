@@ -4,21 +4,23 @@
     "description": "A Python project template",
     "author": "{{ cookiecutter.get('author', 'Your Name') }}",
     "email": "{{ cookiecutter.get('email', 'your@email.com') }}",
-    "github_username": "{{ cookiecutter.get('github_username', 'your_username') }}", 
+    "github_username": "{{ cookiecutter.get('github_username', 'your_username') }}",
     "python_version": "3.11",
+    "primary_port": "8000",
     "docs": "y",
     "coverage": "y",
     "dockerfile": "y",
     "mypy": "y",
     "license": "MIT",
     "envfile": ".env",
-    
+
     "_skip_if_present": [
         "docs",
-        "coverage", 
-        "dockerfile", 
-        "mypy", 
+        "coverage",
+        "dockerfile",
+        "mypy",
         "envfile",
-        "license"
+        "license",
+        "primary_port"
     ]
 }

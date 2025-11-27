@@ -1,0 +1,53 @@
+{%- if cookiecutter.dockerfile == "y" -%}
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: {{cookiecutter.project_name}}
+    restart: unless-stopped
+    ports:
+      - "{{cookiecutter.primary_port}}:{{cookiecutter.primary_port}}"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ENVIRONMENT=development
+      - PORT={{cookiecutter.primary_port}}
+    env_file:
+      - {{cookiecutter.envfile}}
+    volumes:
+      # Mount source for hot-reload in development
+      - ./{{cookiecutter.package_name}}:/{{cookiecutter.project_name}}/{{cookiecutter.package_name}}:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import {{cookiecutter.package_name}}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Uncomment to add additional services
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: {{cookiecutter.project_name}}-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6379:6379"
+
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: {{cookiecutter.project_name}}-db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: ${DB_USER:-postgres}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+  #     POSTGRES_DB: ${DB_NAME:-{{cookiecutter.project_name}}}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+# volumes:
+#   postgres_data:
+{%- else -%}
+# Docker is disabled for this project.
+# To enable, recreate the project with docker_image: true
+{%- endif %}
