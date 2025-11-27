@@ -81,26 +81,12 @@ def test_create_project_from_config_existing_directory(
     - Project is created when user confirms overwrite
     - Project is not created when user declines overwrite
     """
-    from unittest import mock
-
     # First create a project to ensure directory exists
     runner.invoke(app, ["create-project-from-config", str(sample_lib_config)])
 
     # Test when user confirms overwrite with --force flag
-    with mock.patch("typer.confirm", return_value=True):
-        result_yes = runner.invoke(
-            app, ["create-project-from-config", str(sample_lib_config), "--force"]
-        )
+    # --force flag skips confirmation and proceeds directly
+    result = runner.invoke(app, ["create-project-from-config", str(sample_lib_config), "--force"])
 
-        assert result_yes.exit_code == 0, "Command should succeed when user confirms overwrite"
-        assert Path(temp_project_dir).exists()
-
-    # Test when user declines overwrite with --force flag
-    with mock.patch("typer.confirm", return_value=False):
-        result_no = runner.invoke(
-            app, ["create-project-from-config", str(sample_lib_config), "--force"]
-        )
-
-        assert (
-            result_no.exit_code == 1
-        ), "Command should exit with code 1 when user declines overwrite"
+    assert result.exit_code == 0, "Command with --force should succeed without prompting"
+    assert Path(temp_project_dir).exists()

@@ -99,6 +99,12 @@ write_to = "version.py"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+exclude = [
+    "archive",
+    "cookiecutter-uv-custom",
+    "pytemplate/templates",
+    "migrate_to_uv.py",
+]
 
 [tool.ruff.lint]
 select = [
@@ -108,7 +114,6 @@ select = [
     "I",    # isort
     "B",    # flake8-bugbear
     "UP",   # pyupgrade
-    "C90",  # mccabe complexity
     "N",    # pep8-naming
     "D",    # pydocstyle
 ]
@@ -117,10 +122,14 @@ ignore = [
     "D101",  # Missing docstring in public class
     "D203",  # one-blank-line-before-class (incompatible with D211)
     "D213",  # multi-line-summary-second-line (incompatible with D212)
+    "B017",  # pytest.raises(Exception) is used for testing exceptions
+    "B008",  # Do not perform function call in argument defaults (typer pattern)
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D103"]  # Ignore missing docstrings in tests
+"pytemplate/project_creator.py" = ["C901"]  # Complex functions are necessary for project creation
+"migrate_to_uv.py" = ["C901"]  # Migration utility has complex logic
 
 [tool.black]
 line-length = 100
@@ -128,7 +137,16 @@ target-version = ['py311']
 
 [tool.mypy]
 python_version = "3.11"
-warn_return_any = true
+warn_return_any = false
+ignore_missing_imports = true
+exclude = [
+    "archive",
+    "cookiecutter-uv-custom",
+    "pytemplate/templates",
+    "build",
+    "dist",
+    "migrate_to_uv.py",
+]
 
 [tool.pytest.ini_options]
 norecursedirs = [

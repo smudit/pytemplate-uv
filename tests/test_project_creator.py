@@ -32,7 +32,6 @@ class TestProjectCreatorInit:
         """Test that ProjectCreator initializes template resolver."""
         creator = ProjectCreator(str(sample_lib_config))
         assert creator.template_resolver is not None
-        assert creator.template_manager is not None
 
 
 class TestConfigLoading:

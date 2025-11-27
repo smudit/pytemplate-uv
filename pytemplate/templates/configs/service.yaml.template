@@ -30,12 +30,18 @@ service_ports:
 development:
   # Testing
   use_pytest: true
-  
+
   # Code Quality
   use_ruff: true  # Handles both linting and formatting
   use_mypy: true
   use_pre_commit: true
-  
+
+  # Documentation
+  docs: true  # Generate API documentation
+
+  # Environment file
+  envfile: ".env"
+
   # CLI (services may have CLI tools)
   command_line_interface: "no"  # Options: "no", "plain", "argparse", "click", "typer"
   command_line_bin_name: ""  # Only used if command_line_interface is not "no"

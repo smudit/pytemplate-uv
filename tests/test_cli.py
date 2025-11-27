@@ -64,24 +64,20 @@ class TestForceOption:
     """Test force option functionality."""
 
     def test_force_flag_confirmation(self, temp_project_dir: Path, sample_lib_config: Path):
-        """Test that --force flag prompts for confirmation."""
-        # Mock typer.confirm to return False (decline)
-        with mock.patch("typer.confirm", return_value=False):
-            result = runner.invoke(
-                app, ["create-project-from-config", str(sample_lib_config), "--force"]
-            )
-            # When user declines, typer.Exit(code=1) is called
-            assert result.exit_code == 1
-            # Note: The actual confirmation message might not appear in output when mocked
+        """Test that --force flag skips confirmation and proceeds directly."""
+        # --force should NOT prompt for confirmation (it auto-accepts)
+        result = runner.invoke(
+            app, ["create-project-from-config", str(sample_lib_config), "--force"]
+        )
+        # --force should succeed without prompting
+        assert result.exit_code == 0
 
     def test_force_flag_confirmation_yes(self, temp_project_dir: Path, sample_lib_config: Path):
-        """Test that --force flag works when confirmed."""
-        # Mock typer.confirm to return True (accept)
-        with mock.patch("typer.confirm", return_value=True):
-            result = runner.invoke(
-                app, ["create-project-from-config", str(sample_lib_config), "--force"]
-            )
-            assert result.exit_code == 0
+        """Test that --force flag works without prompting."""
+        result = runner.invoke(
+            app, ["create-project-from-config", str(sample_lib_config), "--force"]
+        )
+        assert result.exit_code == 0
 
 
 class TestProjectTypeValidation:

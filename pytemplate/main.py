@@ -7,7 +7,7 @@ from typing import Annotated
 
 import typer
 
-from .logger import logger
+from .logger import enable_file_logging, logger
 from .project_creator import ProjectCreator
 
 # Use TemplateResolver to get config template
@@ -35,22 +35,25 @@ def create_project_from_config(
     ),
     debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug logging"),
     force: bool = typer.Option(
-        False, "--force", "-f", help="Overwrite existing project directory", show_default=True
+        False,
+        "--force",
+        "-f",
+        help="Skip confirmation and overwrite existing project directory without prompting",
+        show_default=True,
     ),
 ) -> None:
     """Create a new project from a configuration file with addons like Docker, devcontainer etc."""
     if debug:
         # Enable debug logging for the entire package
+        enable_file_logging()
         logger.enable("pytemplate")
         logger.debug("Debug logging enabled")
 
-    if force:
-        confirm = typer.confirm(
-            "Are you sure you want to overwrite the existing project directory?"
-        )
-        if not confirm:
-            logger.info("Operation cancelled.")
-            raise typer.Exit(code=1)
+    # --force flag behavior:
+    # - When set: Automatically overwrites existing directories without prompting
+    # - When not set: Prompts for confirmation if directory exists (via cookiecutter)
+    # The force flag is passed to ProjectCreator.create_project_from_config() which
+    # passes it to cookiecutter's overwrite_if_exists parameter.
 
     creator = ProjectCreator(str(config_path), interactive)
     if not creator.create_project_from_config(force=force):
