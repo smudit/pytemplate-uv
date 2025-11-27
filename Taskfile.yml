@@ -1,0 +1,201 @@
+# Taskfile.yml
+# https://taskfile.dev
+
+version: '3'
+
+dotenv:
+  - .env
+  - .env.local
+
+vars:
+  PYTHON_VERSION: '3.11'
+  PACKAGE_NAME: pytemplate
+  TEST_DIR: tests
+  COV_THRESHOLD: '80'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install project dependencies
+    cmds:
+      - uv sync
+    sources:
+      - pyproject.toml
+      - uv.lock
+    generates:
+      - .venv/**/*
+    method: checksum
+
+  install:dev:
+    desc: Install project with dev dependencies
+    cmds:
+      - uv sync --all-extras
+    sources:
+      - pyproject.toml
+      - uv.lock
+    generates:
+      - .venv/**/*
+    method: checksum
+
+  format:
+    desc: Format code with ruff
+    cmds:
+      - uv run ruff format .
+
+  format:check:
+    desc: Check code formatting without making changes
+    cmds:
+      - uv run ruff format --check .
+
+  lint:
+    desc: Lint code with ruff
+    cmds:
+      - uv run ruff check .
+
+  lint:fix:
+    desc: Lint and auto-fix code issues
+    cmds:
+      - uv run ruff check --fix .
+
+  typecheck:
+    desc: Run type checking with mypy
+    cmds:
+      - uv run mypy .
+
+  test:
+    desc: Run tests with pytest
+    cmds:
+      - uv run pytest {{.TEST_DIR}}/
+
+  test:verbose:
+    desc: Run tests with verbose output
+    cmds:
+      - uv run pytest {{.TEST_DIR}}/ -v
+
+  test:watch:
+    desc: Run tests in watch mode
+    cmds:
+      - uv run pytest {{.TEST_DIR}}/ --watch
+
+  coverage:
+    desc: Run tests with coverage report
+    cmds:
+      - uv run pytest --cov={{.PACKAGE_NAME}} {{.TEST_DIR}}/ --cov-report=term-missing
+
+  coverage:html:
+    desc: Generate HTML coverage report
+    cmds:
+      - uv run pytest --cov={{.PACKAGE_NAME}} {{.TEST_DIR}}/ --cov-report=html
+      - echo "Coverage report generated at htmlcov/index.html"
+
+  coverage:xml:
+    desc: Generate XML coverage report for CI
+    cmds:
+      - uv run pytest --cov={{.PACKAGE_NAME}} {{.TEST_DIR}}/ --cov-report=xml
+
+  check:
+    desc: Run all code quality checks
+    deps:
+      - format:check
+      - lint
+      - typecheck
+    cmds:
+      - echo "All checks passed!"
+
+  fix:
+    desc: Fix all auto-fixable issues
+    cmds:
+      - task: format
+      - task: lint:fix
+
+  ci:
+    desc: Run full CI pipeline (format, lint, typecheck, test)
+    cmds:
+      - task: format:check
+      - task: lint
+      - task: typecheck
+      - task: coverage
+
+  clean:
+    desc: Remove build artifacts and cache files
+    cmds:
+      - rm -rf build/
+      - rm -rf dist/
+      - rm -rf *.egg-info/
+      - rm -rf .pytest_cache/
+      - rm -rf .mypy_cache/
+      - rm -rf .ruff_cache/
+      - rm -rf htmlcov/
+      - rm -rf .coverage
+      - rm -rf coverage.xml
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type f -name "*.pyc" -delete 2>/dev/null || true
+
+  clean:all:
+    desc: Remove all artifacts including virtual environment
+    deps:
+      - clean
+    cmds:
+      - rm -rf .venv/
+
+  run:
+    desc: Run the pytemplate CLI
+    cmds:
+      - uv run pytemplate {{.CLI_ARGS}}
+    vars:
+      CLI_ARGS: '{{.CLI_ARGS | default "--help"}}'
+
+  run:create-config:
+    desc: Create a new project configuration
+    cmds:
+      - uv run pytemplate create-config {{.TYPE}}
+    vars:
+      TYPE: '{{.TYPE | default "lib"}}'
+
+  run:create-project:
+    desc: Create project from configuration file
+    preconditions:
+      - sh: test -n "{{.CONFIG}}"
+        msg: "CONFIG variable is required. Usage: task run:create-project CONFIG=path/to/config.yaml"
+    cmds:
+      - uv run pytemplate create-project-from-config {{.CONFIG}} {{.FLAGS}}
+    vars:
+      FLAGS: '{{.FLAGS | default ""}}'
+
+  build:
+    desc: Build the package
+    deps:
+      - clean
+    cmds:
+      - uv build
+
+  publish:dry:
+    desc: Dry run of package publishing
+    deps:
+      - build
+    cmds:
+      - uv publish --dry-run
+
+  deps:check:
+    desc: Check for dependency issues with deptry
+    cmds:
+      - uv run deptry .
+
+  deps:outdated:
+    desc: Check for outdated dependencies
+    cmds:
+      - uv pip list --outdated
+
+  pre-commit:
+    desc: Run pre-commit hooks on all files
+    cmds:
+      - uv run pre-commit run --all-files
+
+  pre-commit:install:
+    desc: Install pre-commit hooks
+    cmds:
+      - uv run pre-commit install
