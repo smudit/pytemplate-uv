@@ -97,6 +97,11 @@ tasks:
     cmds:
       - uv run pytest --cov={{.PACKAGE_NAME}} {{.TEST_DIR}}/ --cov-report=xml
 
+  test-cov:
+    desc: Run tests with coverage and fail if below threshold
+    cmds:
+      - uv run pytest --cov={{.PACKAGE_NAME}} {{.TEST_DIR}}/ --cov-report=term-missing --cov-fail-under={{.COV_THRESHOLD}}
+
   check:
     desc: Run all code quality checks
     deps:
