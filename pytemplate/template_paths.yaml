@@ -20,7 +20,4 @@ shared_resources:
 # AI copilots configuration
 # Format: copilot_name: rules_file_path
 ai_copilots:
-  cursor: .cursor/rules
-  cline: .clinerules
-  augment: .augment-guidelines
-  claude: CLAUDE.md
+

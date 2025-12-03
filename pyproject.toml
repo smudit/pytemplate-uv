@@ -101,7 +101,6 @@ line-length = 100
 target-version = "py311"
 exclude = [
     "archive",
-    "cookiecutter-uv-custom",
     "pytemplate/templates",
     "migrate_to_uv.py",
 ]
@@ -141,7 +140,6 @@ warn_return_any = false
 ignore_missing_imports = true
 exclude = [
     "archive",
-    "cookiecutter-uv-custom",
     "pytemplate/templates",
     "build",
     "dist",
@@ -166,7 +164,6 @@ extend_exclude = [
     "tests",
     "docs",
     "archive",
-    "cookiecutter-uv-custom",
     "templates",
     ".venv",
     "build",
