@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 def sample_lib_config_with_dev_settings(temp_config_dir: Path) -> Path:
     """Create a sample library configuration with development settings.
 
+    Uses the new cookiecutter-uv template format.
+
     Args:
     ----
         temp_config_dir: Temporary directory for config files
@@ -34,10 +36,8 @@ def sample_lib_config_with_dev_settings(temp_config_dir: Path) -> Path:
             "type": "lib",
             "name": "test-lib",
             "description": "Test library project",
-            "python_version": "3.9",
             "author": "Test Author",
             "email": "test@example.com",
-            "version": "0.1.0",
             "license": "MIT",
         },
         "github": {
@@ -47,35 +47,16 @@ def sample_lib_config_with_dev_settings(temp_config_dir: Path) -> Path:
             "github_username": "testuser",
         },
         "development": {
-            "use_pytest": True,
-            "test_matrix_separate_coverage": False,
-            "test_matrix_configurator": False,
-            "use_sphinx": True,
-            "sphinx_theme": "sphinx-rtd-theme",
-            "sphinx_doctest": False,
-            "sphinx_docs_hosting": "readthedocs.io",
-            "use_black": True,
-            "use_ruff": True,
-            "use_mypy": True,
-            "use_pre_commit": True,
-            "use_codecov": True,
-            "use_coveralls": False,
-            "use_scrutinizer": False,
-            "use_codacy": False,
-            "use_codeclimate": False,
-            "command_line_interface": "no",
-            "command_line_bin_name": "",
-            "pypi_badge": True,
-            "pypi_disable_upload": False,
+            "layout": "src",
+            "include_github_actions": True,
+            "mkdocs": True,
+            "type_checker": "mypy",
+            "deptry": True,
+            "codecov": True,
+            "publish_to_pypi": True,
         },
-        "docker": {"docker_image": False, "docker_compose": False},
+        "docker": {"docker_image": False},
         "devcontainer": {"enabled": False},
-        "ai": {
-            "copilots": {
-                "cursor_rules_path": ".cursor/rules/coding_rules.md",
-                "cline_rules_path": ".clinerules",
-            }
-        },
     }
 
     config_path = temp_config_dir / "lib_config_with_dev.yaml"
@@ -134,7 +115,7 @@ def test_create_lib_with_custom_settings(
 
     Verifies that:
     - Custom settings are properly applied
-    - Project structure matches custom configuration
+    - Project structure matches custom configuration (cookiecutter-uv format)
     """
     # Create template directory structure
     template_dir = Path("templates/pylibrary-template")
@@ -147,17 +128,15 @@ def test_create_lib_with_custom_settings(
             "template_paths": {"templates": {"project_templates": {"pylibrary": str(template_dir)}}}
         }
 
-        # Modify config to use custom settings
+        # Modify config to use custom settings (cookiecutter-uv format)
         with open(sample_lib_config_with_dev_settings) as f:
             config = yaml.safe_load(f)
 
         config["development"].update(
             {
-                "use_sphinx": False,
-                "use_black": False,
-                "use_ruff": False,
-                "command_line_interface": "click",
-                "command_line_bin_name": "mycli",
+                "mkdocs": False,  # Disable docs
+                "layout": "flat",  # Use flat layout instead of src
+                "type_checker": "none",  # No type checker
             }
         )
 
@@ -174,11 +153,11 @@ def test_create_lib_with_custom_settings(
         # Verify custom settings were applied
         assert not (
             project_path / "docs"
-        ).exists(), "docs directory should not exist when sphinx is disabled"
+        ).exists(), "docs directory should not exist when mkdocs is disabled"
 
-        # Verify CLI setup
-        cli_file = project_path / "src" / "test_lib" / "cli.py"
-        assert cli_file.exists(), "CLI file should exist when command_line_interface is set"
+        # Verify flat layout (package directly in project root, not in src/)
+        package_dir = project_path / "test_lib"
+        assert package_dir.exists(), "Package directory should exist in flat layout"
 
 
 def test_create_lib_with_invalid_settings(
@@ -186,17 +165,16 @@ def test_create_lib_with_invalid_settings(
     sample_lib_config_with_dev_settings: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """Test library project creation with invalid settings."""
+    """Test library project creation with invalid settings (cookiecutter-uv format)."""
     with mock.patch("pytemplate.project_creator.TemplateResolver") as mock_resolver:
-        mock_resolver.return_value.get_template_path.return_value = (
-            "gh:ionelmc/cookiecutter-pylibrary"
-        )
+        mock_resolver.return_value.get_template_path.return_value = "gh:fpgmaas/cookiecutter-uv"
 
         # Modify config with invalid settings
         with open(sample_lib_config_with_dev_settings) as f:
             config = yaml.safe_load(f)
 
-        config["development"]["command_line_interface"] = "invalid_option"
+        # Use invalid layout option (only "src" and "flat" are valid)
+        config["development"]["layout"] = "invalid_layout"
 
         with open(sample_lib_config_with_dev_settings, "w") as f:
             yaml.dump(config, f)
@@ -211,8 +189,8 @@ def test_create_lib_with_invalid_settings(
 
         # Check logs
         errors = [record.message for record in caplog.records if record.levelname == "ERROR"]
-        assert any("Invalid command line interface option: invalid_option" in msg for msg in errors)
-        assert any("Valid options are: no, click, argparse, plain" in msg for msg in errors)
+        assert any("Invalid layout option: invalid_layout" in msg for msg in errors)
+        assert any("Valid options are: src, flat" in msg for msg in errors)
 
 
 def test_create_lib_template_resolution(

@@ -4,7 +4,7 @@
 # Project scaffolds - Cookiecutter templates that create project directory structures
 project_scaffolds:
   pyproject: templates/pyproject-template
-  pylibrary: gh:ionelmc/cookiecutter-pylibrary
+  pylibrary: gh:fpgmaas/cookiecutter-uv
   terraform-infra: gh:horothesun/infra-cookiecutter-template
 
 # Configuration specifications - YAML templates that define project requirements

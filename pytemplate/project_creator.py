@@ -109,49 +109,58 @@ def _create_project_with_cookiecutter(
 
     try:
         if context.get("project", {}).get("type") == "lib":
-            # Get the library template path from config
+            # Get the library template path from config (fpgmaas/cookiecutter-uv)
             lib_template = template_resolver.get_template_path("project_scaffolds", "pylibrary")
             dev_settings = context.get("development", {})
+            docker_settings = context.get("docker", {})
+            devcontainer_settings = context.get("devcontainer", {})
 
-            # Get repo_name from github config or derive it from project_name
-            # This will override the template's default behavior of adding "python-" prefix
-            repo_name = context["github"].get("repo_name")
-            if not repo_name:
-                # If repo_name is not specified, derive it from project_name
-                repo_name = context["project"]["name"].replace("_", "-")
-                logger.info(f"Derived repo_name from project_name: {repo_name}")
+            # Helper to convert bool to "y"/"n" for cookiecutter
+            def bool_to_yn(value: bool) -> str:
+                return "y" if value else "n"
 
+            # Map license names to cookiecutter-uv format
+            license_mapping = {
+                "MIT": "MIT license",
+                "BSD": "BSD license",
+                "ISC": "ISC license",
+                "Apache 2.0": "Apache Software License 2.0",
+                "GNU GPL v3": "GNU General Public License v3",
+                "Not open source": "Not open source",
+            }
+            project_license = context["project"].get("license", "MIT")
+            mapped_license = license_mapping.get(project_license, "MIT license")
+
+            # Map type_checker to cookiecutter-uv format
+            type_checker = dev_settings.get("type_checker", "mypy")
+            if type_checker == "none":
+                type_checker = "none"  # cookiecutter-uv accepts "none" to skip type checker
+
+            # Build cookiecutter context for fpgmaas/cookiecutter-uv
             cookiecutter_context = {
                 # Project settings
-                "project_name": context["project"]["name"],
-                "repo_name": repo_name,  # Explicitly set repo_name to override template's default
-                "package_name": context["project"]["name"].replace("-", "_"),
-                "full_name": context["project"].get("author", "your name"),
+                "author": context["project"].get("author", "Your Name"),
                 "email": context["project"].get("email", "your.email@example.com"),
-                "github_username": context["github"].get("github_username", "your-github-username"),
-                "version": context["project"].get("version", "0.1.0"),
-                "license": context["project"].get("license", "MIT"),
-                # Development settings mapped from lib.yaml.template
-                "test_runner": "pytest" if dev_settings.get("use_pytest", True) else "nose",
-                "test_matrix_separate_coverage": dev_settings.get(
-                    "test_matrix_separate_coverage", False
+                "author_github_handle": context["github"].get(
+                    "github_username", "your-github-username"
                 ),
-                "test_matrix_configurator": dev_settings.get("test_matrix_configurator", False),
-                "sphinx_docs": "yes" if dev_settings.get("use_sphinx", True) else "no",
-                "sphinx_theme": dev_settings.get("sphinx_theme", "sphinx-rtd-theme"),
-                "sphinx_doctest": "yes" if dev_settings.get("sphinx_doctest", False) else "no",
-                "sphinx_docs_hosting": dev_settings.get("sphinx_docs_hosting", "readthedocs.io"),
-                "codecov": "yes" if dev_settings.get("use_codecov", True) else "no",
-                "coveralls": "yes" if dev_settings.get("use_coveralls", False) else "no",
-                "scrutinizer": "yes" if dev_settings.get("use_scrutinizer", False) else "no",
-                "codacy": "yes" if dev_settings.get("use_codacy", False) else "no",
-                "codeclimate": "yes" if dev_settings.get("use_codeclimate", False) else "no",
-                "command_line_interface": dev_settings.get("command_line_interface", "no"),
-                "command_line_interface_bin_name": dev_settings.get("command_line_bin_name", ""),
-                "pypi_badge": "yes" if dev_settings.get("pypi_badge", True) else "no",
-                "pypi_disable_upload": "yes"
-                if dev_settings.get("pypi_disable_upload", False)
-                else "no",
+                "project_name": context["project"]["name"].replace("_", "-"),
+                "project_slug": context["project"]["name"].replace("-", "_"),
+                "project_description": context["project"].get("description", "A Python library"),
+                # Layout and structure
+                "layout": dev_settings.get("layout", "src"),
+                # CI/CD and tooling
+                "include_github_actions": bool_to_yn(
+                    dev_settings.get("include_github_actions", True)
+                ),
+                "publish_to_pypi": bool_to_yn(dev_settings.get("publish_to_pypi", True)),
+                "deptry": bool_to_yn(dev_settings.get("deptry", True)),
+                "mkdocs": bool_to_yn(dev_settings.get("mkdocs", True)),
+                "codecov": bool_to_yn(dev_settings.get("codecov", True)),
+                "dockerfile": bool_to_yn(docker_settings.get("docker_image", False)),
+                "devcontainer": bool_to_yn(devcontainer_settings.get("enabled", False)),
+                "type_checker": type_checker,
+                "open_source_license": mapped_license,
             }
 
             return _execute_cookiecutter(lib_template, no_input, cookiecutter_context, overwrite)
@@ -280,13 +289,23 @@ class ProjectCreator:
     def _validate_development_settings(self) -> bool:
         """Validate development settings."""
         dev_settings = self.config.get("development", {})
-        cli_interface = dev_settings.get("command_line_interface", "no")
-        valid_cli_options = ["no", "click", "argparse", "plain", "typer"]
+        project_type = self.config["project"]["type"]
 
-        if cli_interface not in valid_cli_options:
-            logger.error(f"Invalid command line interface option: {cli_interface}")
-            logger.error(f"Valid options are: {', '.join(valid_cli_options)}")
-            return False
+        # Validate layout option for library projects (cookiecutter-uv)
+        if project_type == "lib":
+            layout = dev_settings.get("layout", "src")
+            valid_layouts = ["src", "flat"]
+            if layout not in valid_layouts:
+                logger.error(f"Invalid layout option: {layout}")
+                logger.error(f"Valid options are: {', '.join(valid_layouts)}")
+                return False
+
+            type_checker = dev_settings.get("type_checker", "mypy")
+            valid_type_checkers = ["mypy", "none"]
+            if type_checker not in valid_type_checkers:
+                logger.error(f"Invalid type_checker option: {type_checker}")
+                logger.error(f"Valid options are: {', '.join(valid_type_checkers)}")
+                return False
 
         return True
 
@@ -341,12 +360,9 @@ class ProjectCreator:
         # Get docker config with defaults
         docker_config = self.config.get("docker", {})
         docker_image = docker_config.get("docker_image", False)
-        docker_compose = docker_config.get("docker_compose", False)
 
-        if project_type == "lib" and (docker_image or docker_compose):
-            logger.error("Libraries should not have Docker configurations")
-            return False
-
+        # Libraries can optionally have Docker (supported by cookiecutter-uv)
+        # Services must have Docker
         if project_type == "service" and not docker_image:
             logger.error("Service projects require Docker image configuration")
             return False

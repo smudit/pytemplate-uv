@@ -49,9 +49,8 @@ class TestConfigurationEdgeCases:
                 "description": "Test project with special chars",
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         with open(special_config, "w") as f:
@@ -104,9 +103,8 @@ class TestFileSystemEdgeCases:
                 "description": "Test project with very long name",
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         with open(long_config, "w") as f:
@@ -182,9 +180,8 @@ class TestMemoryEdgeCases:
         config_data = {
             "project": {"type": "lib", "name": "test-lib", "description": "Test project"},
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
             # Add many dummy entries
             **{f"dummy_key_{i}": f"dummy_value_{i}" for i in range(1000)},
         }
@@ -211,9 +208,8 @@ class TestCLIEdgeCases:
                 "description": "Test project with unicode",
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         with open(unicode_config, "w", encoding="utf-8") as f:
@@ -230,9 +226,8 @@ class TestCLIEdgeCases:
         config_data = {
             "project": {"type": "lib", "name": "test-lib"},
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         try:

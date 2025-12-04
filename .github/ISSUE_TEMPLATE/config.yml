@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/your-org/pytemplate-uv/tree/main/docs
+    about: Check the documentation for guides and FAQs
+  - name: Quick Start Guide
+    url: https://github.com/your-org/pytemplate-uv/blob/main/docs/training/quick_start_guide.md
+    about: New to PyTemplate UV? Start here
+  - name: Migration Guide
+    url: https://github.com/your-org/pytemplate-uv/blob/main/docs/training/migration_guide.md
+    about: Migrating an existing project? Check the migration guide
+  - name: Troubleshooting
+    url: https://github.com/your-org/pytemplate-uv/blob/main/docs/troubleshooting.md
+    about: Common issues and solutions
+  - name: Support Channel
+    url: https://your-slack-or-teams-link
+    about: Real-time support in #template-migration

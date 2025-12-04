@@ -2,11 +2,9 @@ project:
   name: my_library
   description: A Python library for doing amazing things
   type: lib
-  python_version: "3.12"
   author: "Your Name"
   email: "your.email@example.com"
-  version: "0.1.0"
-  license: "MIT"
+  license: "MIT"  # Options: MIT, BSD, ISC, Apache 2.0, GNU GPL v3, Not open source
 
 github:
   repo_name: my-library
@@ -14,46 +12,31 @@ github:
   github_username: "your-github-username"
   repo_private: true
 
-# Libraries typically don't need Docker configuration
+# Libraries can optionally have Docker configuration (using cookiecutter-uv)
 docker:
   docker_image: false
-  docker_compose: false
 
 devcontainer:
   enabled: false
 
 development:
-  # Testing
-  use_pytest: true
-  test_matrix_separate_coverage: false
-  test_matrix_configurator: false
-  
-  # Documentation
-  use_sphinx: true
-  sphinx_theme: "sphinx-rtd-theme"
-  sphinx_doctest: false
-  sphinx_docs_hosting: "readthedocs.io"
-  
+  # Project layout
+  layout: "src"  # Options: "src", "flat"
+
+  # CI/CD
+  include_github_actions: true
+
+  # Documentation (uses MkDocs)
+  mkdocs: true
+
   # Code Quality
-  use_ruff: true  # Handles both linting and formatting
-  use_mypy: true
-  use_pre_commit: true
-  
+  type_checker: "mypy"  # Options: "mypy", "none"
+  deptry: true  # Dependency checker for unused/missing deps
+
   # Coverage
-  use_codecov: true
-  use_coveralls: false
-  
-  # Code Analysis
-  use_scrutinizer: false
-  use_codacy: false
-  use_codeclimate: false
-  
-  # CLI
-  command_line_interface: "no"  # Options: "no", "plain", "argparse", "click"
-  command_line_bin_name: ""  # Only used if command_line_interface is not "no"
-  
-  # PyPI
-  pypi_badge: true
-  pypi_disable_upload: false
+  codecov: true
+
+  # PyPI Publishing
+  publish_to_pypi: true  # Set to false to disable PyPI publishing workflow
 
 

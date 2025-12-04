@@ -21,16 +21,17 @@ class TestProjectConfigValidation:
                 "type": "lib",
                 "name": "test-project",
                 "description": "A test project",
-                "python_version": "3.11",
                 "author": "Test Author",
                 "email": "test@example.com",
-                "version": "0.1.0",
                 "license": "MIT",
             },
-            "github": {"add_on_github": False},
+            "github": {"add_on_github": False, "github_username": "test-user"},
             "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
+            "development": {
+                "layout": "src",
+                "type_checker": "mypy",
+            },
         }
 
         with open(valid_config, "w") as f:
@@ -53,9 +54,8 @@ class TestProjectConfigValidation:
                 # Missing "type" field
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         with open(invalid_config, "w") as f:
@@ -76,9 +76,8 @@ class TestProjectConfigValidation:
                 # Missing "name" field
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         with open(invalid_config, "w") as f:
@@ -101,7 +100,6 @@ class TestProjectConfigValidation:
             "github": {"add_on_github": False},
             "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         with open(invalid_config, "w") as f:
@@ -122,9 +120,8 @@ class TestProjectConfigValidation:
                 "description": "A test project",
             },
             "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         with open(invalid_config, "w") as f:
@@ -153,10 +150,8 @@ class TestGitHubConfigValidation:
             "docker": {
                 "docker_image": True,
                 "docker_compose": True,
-                "base_image": "python:3.11-slim",
             },
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         with open(valid_config, "w") as f:
@@ -193,9 +188,8 @@ class TestGitHubConfigValidation:
                 "add_on_github": "yes",  # Should be boolean
                 "repo_private": "no",  # Should be boolean
             },
-            "docker": {"docker_image": False, "docker_compose": False},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         with open(invalid_config, "w") as f:
@@ -219,7 +213,6 @@ class TestDockerConfigValidation:
             "github": {"add_on_github": False},
             "docker": {"docker_image": True, "docker_compose": True},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         with open(valid_config, "w") as f:
@@ -248,78 +241,30 @@ class TestDockerConfigValidation:
         creator.create_project_from_config()
 
 
-class TestAIConfigValidation:
-    """Test validation of AI configuration section."""
-
-    def test_valid_ai_config(self, temp_config_dir: Path):
-        """Test validation of valid AI configuration."""
-        valid_config = temp_config_dir / "valid_ai.yaml"
-        config_data = {
-            "project": {"type": "service", "name": "test-service", "description": "A test service"},
-            "github": {"add_on_github": False},
-            "docker": {
-                "docker_image": True,
-                "docker_compose": True,
-                "base_image": "python:3.11-slim",
-            },
-            "devcontainer": {"enabled": False},
-            "ai": {
-                "copilots": {
-                    "cursor_rules_path": ".cursor/rules/coding_rules.md",
-                    "cline_rules_path": ".clinerules",
-                }
-            },
-        }
-
-        with open(valid_config, "w") as f:
-            yaml.dump(config_data, f)
-
-        creator = ProjectCreator(str(valid_config))
-        creator.load_config()
-
-        assert "copilots" in creator.config["ai"]
-        assert (
-            creator.config["ai"]["copilots"]["cursor_rules_path"] == ".cursor/rules/coding_rules.md"
-        )
-
-    def test_missing_ai_section(self, temp_config_dir: Path):
-        """Test handling when AI section is missing."""
-        config_without_ai = temp_config_dir / "no_ai.yaml"
-        config_data = {
-            "project": {"type": "service", "name": "test-service", "description": "A test service"},
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
-            "devcontainer": {"enabled": False},
-            # Missing ai section
-        }
-
-        with open(config_without_ai, "w") as f:
-            yaml.dump(config_data, f)
-
-        creator = ProjectCreator(str(config_without_ai))
-        # Should handle missing AI section gracefully
-        creator.create_project_from_config()
-
-
 class TestDevelopmentConfigValidation:
     """Test validation of development configuration for library projects."""
 
     def test_valid_development_config(self, temp_config_dir: Path):
-        """Test validation of valid development configuration."""
+        """Test validation of valid development configuration for cookiecutter-uv."""
         valid_config = temp_config_dir / "valid_dev.yaml"
         config_data = {
-            "project": {"type": "lib", "name": "test-lib", "description": "A test library"},
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "project": {
+                "type": "lib",
+                "name": "test-lib",
+                "description": "A test library",
+                "license": "MIT",
+            },
+            "github": {"add_on_github": False, "github_username": "test-user"},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
             "development": {
-                "use_pytest": True,
-                "use_sphinx": True,
-                "use_black": True,
-                "use_ruff": True,
-                "use_mypy": True,
-                "command_line_interface": "click",
+                "layout": "src",
+                "include_github_actions": True,
+                "mkdocs": True,
+                "type_checker": "mypy",
+                "deptry": True,
+                "codecov": True,
+                "publish_to_pypi": True,
             },
         }
 
@@ -329,20 +274,19 @@ class TestDevelopmentConfigValidation:
         creator = ProjectCreator(str(valid_config))
         creator.load_config()
 
-        assert creator.config["development"]["use_pytest"] is True
-        assert creator.config["development"]["command_line_interface"] == "click"
+        assert creator.config["development"]["layout"] == "src"
+        assert creator.config["development"]["type_checker"] == "mypy"
 
-    def test_invalid_cli_interface_option(self, temp_config_dir: Path):
-        """Test validation with invalid CLI interface option."""
-        invalid_config = temp_config_dir / "invalid_cli.yaml"
+    def test_invalid_layout_option(self, temp_config_dir: Path):
+        """Test validation with invalid layout option."""
+        invalid_config = temp_config_dir / "invalid_layout.yaml"
         config_data = {
             "project": {"type": "lib", "name": "test-lib", "description": "A test library"},
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "github": {"add_on_github": False, "github_username": "test-user"},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
             "development": {
-                "command_line_interface": "invalid_option"  # Invalid option
+                "layout": "invalid_layout"  # Invalid option
             },
         }
 
@@ -350,7 +294,28 @@ class TestDevelopmentConfigValidation:
             yaml.dump(config_data, f)
 
         creator = ProjectCreator(str(invalid_config))
-        # Should fail with invalid CLI interface option
+        # Should fail with invalid layout option
+        result = creator.create_project_from_config()
+        assert result is False
+
+    def test_invalid_type_checker_option(self, temp_config_dir: Path):
+        """Test validation with invalid type_checker option."""
+        invalid_config = temp_config_dir / "invalid_type_checker.yaml"
+        config_data = {
+            "project": {"type": "lib", "name": "test-lib", "description": "A test library"},
+            "github": {"add_on_github": False, "github_username": "test-user"},
+            "docker": {"docker_image": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "type_checker": "invalid_checker"  # Invalid option
+            },
+        }
+
+        with open(invalid_config, "w") as f:
+            yaml.dump(config_data, f)
+
+        creator = ProjectCreator(str(invalid_config))
+        # Should fail with invalid type_checker option
         result = creator.create_project_from_config()
         assert result is False
 
@@ -375,10 +340,9 @@ class TestConfigSchemaCompliance:
         extra_config = temp_config_dir / "extra.yaml"
         config_data = {
             "project": {"type": "lib", "name": "test-lib", "description": "A test library"},
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "github": {"add_on_github": False, "github_username": "test-user"},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
             "unknown_section": {  # Extra unknown section
                 "unknown_field": "unknown_value"
             },

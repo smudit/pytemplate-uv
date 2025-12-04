@@ -41,12 +41,20 @@ class TestEndToEndWorkflows:
                     "description": "Integration test library",
                     "author": "Test Author",
                     "email": "test@example.com",
-                    "version": "0.1.0",
+                    "license": "MIT",
                 },
-                "github": {"add_on_github": False},
-                "docker": {"docker_image": False, "docker_compose": False},
+                "github": {"add_on_github": False, "github_username": "test-user"},
+                "docker": {"docker_image": False},
                 "devcontainer": {"enabled": False},
-                "ai": {"copilots": {}},
+                "development": {
+                    "layout": "src",
+                    "include_github_actions": True,
+                    "mkdocs": True,
+                    "type_checker": "mypy",
+                    "deptry": True,
+                    "codecov": True,
+                    "publish_to_pypi": True,
+                },
             }
         )
 
@@ -93,7 +101,6 @@ class TestEndToEndWorkflows:
                 "github": {"add_on_github": False},
                 "docker": {"docker_image": True, "docker_compose": True},
                 "devcontainer": {"enabled": True},
-                "ai": {"copilots": {}},
             }
         )
 
@@ -142,7 +149,6 @@ class TestEndToEndWorkflows:
                 "github": {"add_on_github": False},
                 "docker": {"docker_image": False, "docker_compose": False},
                 "devcontainer": {"enabled": True},
-                "ai": {"copilots": {}},
             }
         )
 
@@ -171,11 +177,20 @@ class TestProjectStructureValidation:
                 "description": "Structure test library",
                 "author": "Test Author",
                 "email": "test@example.com",
+                "license": "MIT",
             },
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "github": {"add_on_github": False, "github_username": "test-user"},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
+            "development": {
+                "layout": "src",
+                "include_github_actions": True,
+                "mkdocs": True,
+                "type_checker": "mypy",
+                "deptry": True,
+                "codecov": True,
+                "publish_to_pypi": True,
+            },
         }
 
         config_path = temp_config_dir / "structure_test.yaml"
@@ -211,7 +226,6 @@ class TestProjectStructureValidation:
             "github": {"add_on_github": False},
             "docker": {"docker_image": True, "docker_compose": True},
             "devcontainer": {"enabled": True},
-            "ai": {"copilots": {}},
         }
 
         config_path = temp_config_dir / "service_structure_test.yaml"
@@ -263,19 +277,28 @@ class TestConfigurationTemplateIntegration:
             if not isinstance(config, dict):
                 config = {}
 
-            config.update(
-                {
-                    "project": {
-                        "type": project_type,
-                        "name": f"test-{project_type}",
-                        "description": f"Test {project_type} project",
-                    },
-                    "github": {"add_on_github": False},
-                    "docker": {"docker_image": project_type == "service", "docker_compose": False},
-                    "devcontainer": {"enabled": False},
-                    "ai": {"copilots": {}},
+            base_config = {
+                "project": {
+                    "type": project_type,
+                    "name": f"test-{project_type}",
+                    "description": f"Test {project_type} project",
+                },
+                "github": {"add_on_github": False, "github_username": "test-user"},
+                "docker": {"docker_image": project_type == "service", "docker_compose": False},
+                "devcontainer": {"enabled": False},
+            }
+            # Add development section for lib projects
+            if project_type == "lib":
+                base_config["development"] = {
+                    "layout": "src",
+                    "include_github_actions": True,
+                    "mkdocs": True,
+                    "type_checker": "mypy",
+                    "deptry": True,
+                    "codecov": True,
+                    "publish_to_pypi": True,
                 }
-            )
+            config.update(base_config)
 
             with open(config_path, "w") as f:
                 yaml.dump(config, f)
@@ -308,11 +331,15 @@ class TestErrorRecoveryIntegration:
                 "type": "lib",
                 "name": "missing-template-test",
                 "description": "Missing template test",
+                "license": "MIT",
             },
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "github": {"add_on_github": False, "github_username": "test-user"},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
+            "development": {
+                "layout": "src",
+                "type_checker": "mypy",
+            },
         }
 
         config_path = temp_config_dir / "missing_template_test.yaml"
@@ -357,11 +384,15 @@ class TestCLIIntegration:
                 "type": "lib",
                 "name": "cli-options-test",
                 "description": "CLI options test",
+                "license": "MIT",
             },
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "github": {"add_on_github": False, "github_username": "test-user"},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
+            "development": {
+                "layout": "src",
+                "type_checker": "mypy",
+            },
         }
 
         config_path = temp_config_dir / "cli_options_test.yaml"
@@ -399,7 +430,6 @@ class TestExternalToolIntegration:
             "github": {"add_on_github": False},
             "docker": {"docker_image": True, "docker_compose": True},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
         }
 
         config_path = temp_config_dir / "docker_integration_test.yaml"
@@ -434,11 +464,15 @@ class TestPerformanceIntegration:
                     "type": "lib",
                     "name": f"perf-test-{i}",
                     "description": f"Performance test project {i}",
+                    "license": "MIT",
                 },
-                "github": {"add_on_github": False},
-                "docker": {"docker_image": False, "docker_compose": False},
+                "github": {"add_on_github": False, "github_username": "test-user"},
+                "docker": {"docker_image": False},
                 "devcontainer": {"enabled": False},
-                "ai": {"copilots": {}},
+                "development": {
+                    "layout": "src",
+                    "type_checker": "mypy",
+                },
             }
 
             config_path = temp_config_dir / f"perf_test_{i}.yaml"
@@ -466,11 +500,15 @@ class TestPerformanceIntegration:
                 "type": "lib",
                 "name": "large-config-perf-test",
                 "description": "Large config performance test",
+                "license": "MIT",
             },
-            "github": {"add_on_github": False},
-            "docker": {"docker_image": False, "docker_compose": False},
+            "github": {"add_on_github": False, "github_username": "test-user"},
+            "docker": {"docker_image": False},
             "devcontainer": {"enabled": False},
-            "ai": {"copilots": {}},
+            "development": {
+                "layout": "src",
+                "type_checker": "mypy",
+            },
         }
 
         # Add many dummy entries

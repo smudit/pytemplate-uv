@@ -92,7 +92,7 @@ class TestTemplateResolver:
     def test_resolve_github_template_path(self, temp_config_dir: Path):
         """Test resolving GitHub template paths."""
         config_path = temp_config_dir / "template_paths.yaml"
-        config_data = {"project_templates": {"pylibrary": "gh:ionelmc/cookiecutter-pylibrary"}}
+        config_data = {"project_templates": {"pylibrary": "gh:fpgmaas/cookiecutter-uv"}}
 
         with open(config_path, "w") as f:
             yaml.dump(config_data, f)
@@ -100,7 +100,7 @@ class TestTemplateResolver:
         with mock.patch("pytemplate.template_manager.TEMPLATE_PATHS_FILE", config_path):
             resolver = TemplateResolver()
             template_path = resolver.get_template_path("project_templates", "pylibrary")
-            assert str(template_path) == "gh:ionelmc/cookiecutter-pylibrary"
+            assert str(template_path) == "gh:fpgmaas/cookiecutter-uv"
 
     def test_load_template_paths_file_not_found(self, temp_config_dir: Path):
         """Test handling when template paths file is not found."""

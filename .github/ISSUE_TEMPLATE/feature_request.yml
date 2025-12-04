@@ -1,0 +1,103 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please describe what you'd like to see.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature Area
+      description: Which area would this feature affect?
+      options:
+        - Template Generation
+        - Project Types
+        - Configuration System
+        - CLI Commands
+        - Logging
+        - Dependencies
+        - CI/CD
+        - Documentation
+        - Developer Experience
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? Or what opportunity does it address?
+      placeholder: |
+        I'm frustrated when...
+        It would be helpful if...
+        Currently I have to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like.
+      placeholder: |
+        I would like to be able to...
+        This could work by...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions or workarounds?
+      placeholder: |
+        I've tried...
+        An alternative could be...
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples
+      description: If applicable, provide examples of how this would work.
+      placeholder: |
+        Example command:
+        ```bash
+        pytemplate new-feature --option value
+        ```
+
+        Example output:
+        ```
+        Feature result here...
+        ```
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Nice to have
+        - Would improve my workflow
+        - Important for my use case
+        - Critical blocker
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context, screenshots, or references.
+      placeholder: Add any other context...
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to contribute this feature

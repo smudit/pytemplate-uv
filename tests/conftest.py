@@ -100,11 +100,27 @@ def sample_lib_config(temp_config_dir: Path) -> Path:
             "type": "lib",
             "name": "test-lib",
             "description": "Test library project",
-            "python_version": "3.9",
+            "author": "Test Author",
+            "email": "test@example.com",
+            "license": "MIT",
         },
-        "github": {"add_on_github": False, "repo_name": "test-lib", "repo_private": False},
-        "docker": {"docker_image": False, "docker_compose": False},
+        "github": {
+            "add_on_github": False,
+            "repo_name": "test-lib",
+            "github_username": "test-user",
+            "repo_private": False,
+        },
+        "docker": {"docker_image": False},
         "devcontainer": {"enabled": False},
+        "development": {
+            "layout": "src",
+            "include_github_actions": True,
+            "mkdocs": True,
+            "type_checker": "mypy",
+            "deptry": True,
+            "codecov": True,
+            "publish_to_pypi": True,
+        },
     }
 
     config_path = temp_config_dir / "lib_config.yaml"
@@ -340,12 +356,17 @@ def mock_cookiecutter(monkeypatch):
     def mock_cookie(*args, **kwargs):
         """Create a simple directory structure for testing."""
         output_dir = kwargs.get("output_dir", ".")
-        project_name = kwargs.get("extra_context", {}).get("project_name", "test-project")
         extra_context = kwargs.get("extra_context", {})
+        project_name = extra_context.get("project_name", "test-project")
 
         # Create output directory
         project_path = Path(output_dir) / project_name
         project_path.mkdir(parents=True, exist_ok=True)
+
+        # Get description from either old or new format
+        description = extra_context.get(
+            "project_description", extra_context.get("description", "A Python project")
+        )
 
         # Create basic project structure
         (project_path / "pyproject.toml").write_text(
@@ -353,13 +374,20 @@ def mock_cookiecutter(monkeypatch):
         )
 
         # Create README.md file
-        (project_path / "README.md").write_text(
-            f"# {project_name}\n\n{extra_context.get('description', 'A Python project')}\n"
-        )
+        (project_path / "README.md").write_text(f"# {project_name}\n\n{description}\n")
 
         # Create package directory with the same name
-        package_name = project_name.replace("-", "_")
-        package_path = project_path / "src" / package_name
+        # Handle both slug formats (project_slug for cookiecutter-uv, package_name for others)
+        package_name = extra_context.get(
+            "project_slug", extra_context.get("package_name", project_name.replace("-", "_"))
+        )
+
+        # Determine layout (src vs flat) - cookiecutter-uv uses "layout" field
+        layout = extra_context.get("layout", "src")
+        if layout == "src":
+            package_path = project_path / "src" / package_name
+        else:
+            package_path = project_path / package_name
         package_path.mkdir(parents=True, exist_ok=True)
         (package_path / "__init__.py").write_text("")
         (package_path / "main.py").write_text("def main():\n    print('Hello World')\n")
@@ -370,17 +398,23 @@ def mock_cookiecutter(monkeypatch):
         (test_path / "__init__.py").write_text("")
         (test_path / "test_main.py").write_text("def test_main():\n    assert True\n")
 
-        # Create docs directory if sphinx is enabled
+        # Create docs directory - handle both old (sphinx_docs) and new (mkdocs) formats
         development_config = extra_context.get("development", {})
-        if extra_context.get("sphinx_docs") == "yes" or (
+        mkdocs_enabled = extra_context.get("mkdocs") == "y"
+        sphinx_enabled = extra_context.get("sphinx_docs") == "yes" or (
             isinstance(development_config, dict) and development_config.get("use_sphinx")
-        ):
+        )
+        if mkdocs_enabled or sphinx_enabled:
             docs_path = project_path / "docs"
             docs_path.mkdir(parents=True, exist_ok=True)
-            (docs_path / "conf.py").write_text("")
-            (docs_path / "index.rst").write_text("Welcome to documentation")
+            if mkdocs_enabled:
+                (docs_path / "index.md").write_text("# Welcome to documentation")
+                (project_path / "mkdocs.yml").write_text(f"site_name: {project_name}\n")
+            else:
+                (docs_path / "conf.py").write_text("")
+                (docs_path / "index.rst").write_text("Welcome to documentation")
 
-        # Create CLI file if CLI is enabled
+        # Create CLI file if CLI is enabled (old format only - cookiecutter-uv doesn't have CLI)
         cli_interface = extra_context.get("command_line_interface")
         if cli_interface and cli_interface != "no":
             cli_path = package_path / "cli.py"
@@ -391,25 +425,34 @@ def mock_cookiecutter(monkeypatch):
                 cli_path = package_path / "cli.py"
                 cli_path.write_text("import click\n\n@click.group()\ndef cli():\n    pass\n")
 
-        # Create Docker files if docker is enabled
+        # Create Docker files - handle both old (dict) and new (y/n string) formats
         docker_config = extra_context.get("docker", {})
-        if isinstance(docker_config, dict):
-            if docker_config.get("docker_image"):
-                dockerfile_content = (
-                    "FROM python:3.11-slim\nWORKDIR /app\nCOPY . .\n"
-                    "RUN pip install .\nCMD ['python', '-m', 'package']\n"
-                )
-                (project_path / "Dockerfile").write_text(dockerfile_content)
-            if docker_config.get("docker_compose"):
-                compose_content = (
-                    "version: '3.8'\nservices:\n  app:\n    build: .\n"
-                    "    ports:\n      - '8000:8000'\n"
-                )
-                (project_path / "docker-compose.yml").write_text(compose_content)
+        dockerfile_enabled = extra_context.get("dockerfile") == "y" or (
+            isinstance(docker_config, dict) and docker_config.get("docker_image")
+        )
+        docker_compose_enabled = isinstance(docker_config, dict) and docker_config.get(
+            "docker_compose"
+        )
 
-        # Create devcontainer files if enabled
+        if dockerfile_enabled:
+            dockerfile_content = (
+                "FROM python:3.11-slim\nWORKDIR /app\nCOPY . .\n"
+                "RUN pip install .\nCMD ['python', '-m', 'package']\n"
+            )
+            (project_path / "Dockerfile").write_text(dockerfile_content)
+        if docker_compose_enabled:
+            compose_content = (
+                "version: '3.8'\nservices:\n  app:\n    build: .\n"
+                "    ports:\n      - '8000:8000'\n"
+            )
+            (project_path / "docker-compose.yml").write_text(compose_content)
+
+        # Create devcontainer files - handle both old (dict) and new (y/n string) formats
         devcontainer_config = extra_context.get("devcontainer", {})
-        if isinstance(devcontainer_config, dict) and devcontainer_config.get("enabled"):
+        devcontainer_enabled = extra_context.get("devcontainer") == "y" or (
+            isinstance(devcontainer_config, dict) and devcontainer_config.get("enabled")
+        )
+        if devcontainer_enabled:
             devcontainer_dir = project_path / ".devcontainer"
             devcontainer_dir.mkdir(parents=True, exist_ok=True)
             devcontainer_content = (
@@ -417,6 +460,12 @@ def mock_cookiecutter(monkeypatch):
                 '  "image": "mcr.microsoft.com/devcontainers/python:3.11"\n}\n'
             )
             (devcontainer_dir / "devcontainer.json").write_text(devcontainer_content)
+
+        # Create GitHub Actions if enabled (cookiecutter-uv)
+        if extra_context.get("include_github_actions") == "y":
+            github_dir = project_path / ".github" / "workflows"
+            github_dir.mkdir(parents=True, exist_ok=True)
+            (github_dir / "main.yml").write_text("name: CI\non: [push, pull_request]\n")
 
         return str(project_path)
 

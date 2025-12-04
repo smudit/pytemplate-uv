@@ -1,0 +1,162 @@
+name: Migration Help
+description: Get help migrating an existing project to PyTemplate UV
+title: "[Migration]: "
+labels: ["migration", "help wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Need help with your migration? We're here to help! Please provide details about your project.
+
+  - type: dropdown
+    id: migration-type
+    attributes:
+      label: Migration Type
+      description: What kind of project are you migrating?
+      options:
+        - Library (PyPI package)
+        - Service (API/Application)
+        - Workspace (Monorepo)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: migration-method
+    attributes:
+      label: Migration Method Attempted
+      description: How did you try to migrate?
+      options:
+        - Automated script (migrate_to_uv.py)
+        - Manual migration
+        - Haven't started yet
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Migration Stage
+      description: Where are you in the migration process?
+      options:
+        - Planning / Pre-migration
+        - pyproject.toml conversion
+        - Dependency installation
+        - Test suite migration
+        - CI/CD setup
+        - Post-migration validation
+        - Rollback needed
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: What's the Issue?
+      description: Describe what you're struggling with or what's failing.
+      placeholder: |
+        I'm having trouble with...
+        The migration script fails when...
+        I don't understand how to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error Message
+      description: If there's an error, paste it here.
+      render: shell
+      placeholder: |
+        Paste error message here...
+
+  - type: textarea
+    id: current-setup
+    attributes:
+      label: Current Project Setup
+      description: Describe your current project structure and tools.
+      placeholder: |
+        Build system: setuptools / poetry / other
+        Python version: 3.x
+        Key dependencies: ...
+        CI/CD: GitHub Actions / Jenkins / other
+        Special features: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: pyproject
+    attributes:
+      label: Current pyproject.toml
+      description: Paste your current pyproject.toml (remove sensitive data).
+      render: toml
+      placeholder: |
+        [build-system]
+        requires = ["setuptools"]
+        ...
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What Have You Tried?
+      description: What solutions have you already attempted?
+      placeholder: |
+        1. I tried...
+        2. I also tried...
+        3. I looked at the docs but...
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency
+      description: How urgent is this migration?
+      options:
+        - No rush - exploring options
+        - This week - have some time
+        - Urgent - blocking other work
+        - Critical - production deadline
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: What Python version(s) does your project use?
+      placeholder: "3.11"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - Multiple
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other information that might help.
+      placeholder: |
+        The project also uses...
+        We have a custom...
+        Our deployment is...
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have read the migration guide
+          required: true
+        - label: I have checked the FAQ
+          required: true
+        - label: I have created a backup of my project
+          required: true
