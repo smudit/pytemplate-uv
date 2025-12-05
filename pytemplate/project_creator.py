@@ -412,6 +412,10 @@ class ProjectCreator:
                 if not self._setup_taskfile_for_lib():
                     logger.warning("Failed to set up Taskfile for lib project")
 
+                # Set up .envrc for lib projects (add to project and .gitignore)
+                if not self._setup_envrc():
+                    logger.warning("Failed to set up .envrc for lib project")
+
                 # Copy AI copilot templates for lib projects
                 copilots = self._get_copilots_config()
                 if copilots:
@@ -723,6 +727,49 @@ class ProjectCreator:
             return True
         except Exception as e:
             logger.error(f"Failed to set up Taskfile for lib project: {e}")
+            return False
+
+    def _setup_envrc(self) -> bool:
+        """Set up .envrc file and add it to .gitignore.
+
+        Returns
+        -------
+            bool: True if successful, False otherwise.
+
+        """
+        if self.project_path is None:
+            logger.error("Project path is not set")
+            return False
+
+        try:
+            # Load .envrc template from shared resources
+            envrc_content = self._load_template_content("shared_resources", "envrc")
+            if not envrc_content:
+                logger.warning(".envrc template not found")
+                return False
+
+            # Write .envrc to project root
+            envrc_path = self.project_path / ".envrc"
+            envrc_path.write_text(envrc_content)
+            logger.info("Created .envrc file")
+
+            # Add .envrc to .gitignore if not already present
+            gitignore_path = self.project_path / ".gitignore"
+            if gitignore_path.exists():
+                gitignore_content = gitignore_path.read_text()
+                if ".envrc" not in gitignore_content:
+                    # Add .envrc to .gitignore
+                    with gitignore_path.open("a") as f:
+                        f.write("\n# direnv\n.envrc\n")
+                    logger.info("Added .envrc to .gitignore")
+            else:
+                # Create .gitignore with .envrc
+                gitignore_path.write_text("# direnv\n.envrc\n")
+                logger.info("Created .gitignore with .envrc")
+
+            return True
+        except Exception as e:
+            logger.error(f"Failed to set up .envrc: {e}")
             return False
 
     def copy_ai_templates(self) -> bool:

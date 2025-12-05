@@ -1,0 +1,16 @@
+# Load variables from .env into the environment.
+# Uses direnv's built-in "dotenv" if available, otherwise falls back to manual.
+if declare -f dotenv >/dev/null 2>&1; then
+  # Loads .env in KEY=VALUE form
+  dotenv
+else
+  # Fallback: POSIX-style loader
+  set -a
+  [ -f .env ] && . .env
+  set +a
+fi
+
+# Optional: activate a Python virtualenv if it exists (works great with uv)
+if [[ -d .venv ]] && [[ -f .venv/bin/activate ]]; then
+  source .venv/bin/activate
+fi
