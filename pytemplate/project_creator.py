@@ -448,10 +448,16 @@ class ProjectCreator:
                 # Development settings mapped to cookiecutter variables
                 "mypy": bool_to_yn(dev_settings.get("use_mypy", True)),
                 "coverage": bool_to_yn(dev_settings.get("use_pytest", True)),
-                "docs": bool_to_yn(dev_settings.get("docs", True)),
                 "dockerfile": bool_to_yn(self.config.get("docker", {}).get("docker_image", True)),
                 "license": self.config["project"].get("license", "MIT"),
                 "envfile": dev_settings.get("envfile", ".env"),
+                # New toolchain options
+                "deptry": bool_to_yn(dev_settings.get("deptry", True)),
+                "codecov": bool_to_yn(dev_settings.get("codecov", True)),
+                "mkdocs": bool_to_yn(dev_settings.get("mkdocs", True)),
+                "include_github_actions": bool_to_yn(
+                    dev_settings.get("include_github_actions", True)
+                ),
             }
             logger.debug(f"Project context: {context}")
 
@@ -620,8 +626,7 @@ class ProjectCreator:
 
         if not isinstance(copilots_config, dict):
             logger.warning(
-                f"AI copilots configuration is not a dict, found "
-                f"{type(copilots_config).__name__}"
+                f"AI copilots configuration is not a dict, found {type(copilots_config).__name__}"
             )
             return {}
 

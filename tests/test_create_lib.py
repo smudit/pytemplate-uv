@@ -151,9 +151,9 @@ def test_create_lib_with_custom_settings(
         project_path = Path(temp_project_dir) / "test-lib"
 
         # Verify custom settings were applied
-        assert not (
-            project_path / "docs"
-        ).exists(), "docs directory should not exist when mkdocs is disabled"
+        assert not (project_path / "docs").exists(), (
+            "docs directory should not exist when mkdocs is disabled"
+        )
 
         # Verify flat layout (package directly in project root, not in src/)
         package_dir = project_path / "test_lib"

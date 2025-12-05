@@ -95,9 +95,9 @@ class TestProjectTypeValidation:
                 mock_resolver.return_value.get_template_path.return_value = mock_path
 
                 result = runner.invoke(app, ["create-config", project_type])
-                assert (
-                    result.exit_code == 0
-                ), f"Valid project type {project_type} should be accepted"
+                assert result.exit_code == 0, (
+                    f"Valid project type {project_type} should be accepted"
+                )
 
     def test_invalid_project_type(self, temp_project_dir: Path):
         """Test that invalid project types are rejected."""

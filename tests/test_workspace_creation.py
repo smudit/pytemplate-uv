@@ -102,9 +102,9 @@ class TestWorkspaceProjectCreation:
             )
 
             assert result.exit_code == 0, "Command should exit with code 0"
-            assert (
-                Path(temp_project_dir) / "test-workspace"
-            ).exists(), "Project directory should be created"
+            assert (Path(temp_project_dir) / "test-workspace").exists(), (
+                "Project directory should be created"
+            )
 
     def test_create_workspace_project_with_devcontainer(
         self, temp_project_dir: str, sample_workspace_config: Path
@@ -146,9 +146,9 @@ class TestWorkspaceProjectCreation:
             )
 
             assert result.exit_code == 0, "Command should exit with code 0"
-            assert (
-                Path(temp_project_dir) / "test-workspace"
-            ).exists(), "Project directory should be created"
+            assert (Path(temp_project_dir) / "test-workspace").exists(), (
+                "Project directory should be created"
+            )
 
     def test_workspace_config_validation(self, temp_config_dir: Path):
         """Test workspace configuration validation."""
@@ -235,9 +235,9 @@ class TestWorkspaceProjectCreation:
             )
 
             assert result.exit_code == 0, "Command should exit with code 0"
-            assert (
-                Path(temp_project_dir) / "test-workspace"
-            ).exists(), "Project directory should be created"
+            assert (Path(temp_project_dir) / "test-workspace").exists(), (
+                "Project directory should be created"
+            )
 
     def test_workspace_with_invalid_config(self, temp_config_dir: Path):
         """Test workspace project creation with invalid configuration."""

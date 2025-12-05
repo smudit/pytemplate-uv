@@ -61,7 +61,11 @@ make test
 - `make lint`: Run code linters
 - `make format`: Auto-format code
 - `make test`: Run tests
-- `make docs`: Generate documentation
+- `make quality`: Run all quality checks (lint, format-check{% if cookiecutter.mypy == "y" %}, typecheck{% endif %}{% if cookiecutter.deptry == "y" %}, deptry{% endif %})
+{%- if cookiecutter.mkdocs == "y" %}
+- `make docs-serve`: Serve documentation locally
+- `make docs-build`: Build documentation
+{%- endif %}
 
 ## 🤝 Contributing
 

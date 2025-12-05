@@ -15,7 +15,17 @@ endif
 UV_RUN = uv run
 
 # Targets
-.PHONY: help setup dev start run lint lint-fix format format-check test test-cov clean docs build publish
+.PHONY: help setup dev start run lint lint-fix format format-check test test-cov clean build publish
+{%- if cookiecutter.mypy == "y" %}
+.PHONY: typecheck
+{%- endif %}
+{%- if cookiecutter.deptry == "y" %}
+.PHONY: deptry
+{%- endif %}
+{%- if cookiecutter.mkdocs == "y" %}
+.PHONY: docs-serve docs-build
+{%- endif %}
+.PHONY: quality
 
 help:
 	@echo " {{cookiecutter.project_name}} - Project Management Commands"
@@ -31,14 +41,24 @@ help:
 	@echo "  make lint-fix - Run linter with auto-fix"
 	@echo "  make format   - Format code using Black"
 	@echo "  make format-check - Check code formatting"
+{%- if cookiecutter.mypy == "y" %}
+	@echo "  make typecheck - Run type checking with mypy"
+{%- endif %}
+{%- if cookiecutter.deptry == "y" %}
+	@echo "  make deptry   - Check for dependency issues"
+{%- endif %}
+	@echo "  make quality  - Run all quality checks"
 	@echo ""
 	@echo "Testing:"
 	@echo "  make test     - Run tests"
 	@echo "  make test-cov - Run tests with coverage report"
 	@echo ""
+{%- if cookiecutter.mkdocs == "y" %}
 	@echo "Documentation:"
-	@echo "  make docs     - Generate documentation"
+	@echo "  make docs-serve - Serve documentation locally"
+	@echo "  make docs-build - Build documentation"
 	@echo ""
+{%- endif %}
 	@echo "Packaging:"
 	@echo "  make build    - Build distribution packages"
 	@echo "  make publish  - Publish package to PyPI"
@@ -113,10 +133,33 @@ else
 	find . -type d -name "__pycache__" -exec $(RMDIR) {} + 2>/dev/null || true
 endif
 
-# Generate documentation
-docs:
-	@echo "Generating documentation..."
-	$(UV_RUN) pdoc -o docs {{cookiecutter.package_name}}
+{%- if cookiecutter.mypy == "y" %}
+# Type checking
+typecheck:
+	@echo "Running type checker..."
+	$(UV_RUN) mypy .
+{% endif %}
+{%- if cookiecutter.deptry == "y" %}
+# Check dependencies
+deptry:
+	@echo "Checking dependencies with deptry..."
+	$(UV_RUN) deptry .
+{% endif %}
+{%- if cookiecutter.mkdocs == "y" %}
+# Serve documentation locally
+docs-serve:
+	@echo "Serving documentation..."
+	$(UV_RUN) mkdocs serve
+
+# Build documentation
+docs-build:
+	@echo "Building documentation..."
+	$(UV_RUN) mkdocs build
+{% endif %}
+# Run all quality checks
+quality: lint format-check{% if cookiecutter.mypy == "y" %} typecheck{% endif %}{% if cookiecutter.deptry == "y" %} deptry{% endif %}
+
+	@echo "All quality checks passed!"
 
 # Build distribution packages
 build:

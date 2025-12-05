@@ -13,14 +13,14 @@ Determine the context before executing:
 
 **1. Code Review Context** (invoked by `/codex-review` or context contains "code review"):
 
-- Use defaults WITHOUT prompting: `gpt-5.1-codex`, `medium` reasoning
+- Use defaults WITHOUT prompting: `gpt-5.1-codex-max`, `high` reasoning
 - Override only if user explicitly specifies model/reasoning
 
 **2. General/Interactive Context** (direct user request like "use codex to..."):
 
 - Ask user (via `AskUserQuestion`) in a **single prompt with two questions**:
-  - Which model: `gpt-5.1-codex` or `gpt-5.1`
-  - Which reasoning: `high`, `medium`, or `low`
+  - Which model: `gpt-5.1-codex-max` (default) or `gpt-5.1`
+  - Which reasoning: `high` (default), `medium`, or `low`
 
 ## Building the Codex Command
 
@@ -32,8 +32,8 @@ Determine the context before executing:
 ### Model & Reasoning
 
 ```bash
--m <MODEL>                                    # gpt-5-codex or gpt-5
---config model_reasoning_effort="<LEVEL>"    # high, medium, or low
+-m <MODEL>                                    # gpt-5.1-codex-max (default) or gpt-5.1
+--config model_reasoning_effort="<LEVEL>"    # high (default), medium, or low
 ```
 
 ### Sandbox Modes
@@ -70,8 +70,8 @@ echo "your prompt here" | codex exec --skip-git-repo-check resume --last 2>/dev/
 ### Code Review (Read-Only)
 
 ```bash
-codex exec -m gpt-5-codex \
-  --config model_reasoning_effort="medium" \
+codex exec -m gpt-5.1-codex-max \
+  --config model_reasoning_effort="high" \
   --sandbox read-only \
   --skip-git-repo-check \
   -C /path/to/project \
@@ -81,7 +81,7 @@ codex exec -m gpt-5-codex \
 ### Interactive Refactoring (Workspace Write)
 
 ```bash
-codex exec -m gpt-5 \
+codex exec -m gpt-5.1-codex-max \
   --config model_reasoning_effort="high" \
   --sandbox workspace-write \
   --full-auto \

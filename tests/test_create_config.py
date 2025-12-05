@@ -117,9 +117,9 @@ def test_create_config_invalid_type(temp_project_dir: Path, mock_config_template
 
         assert result.exit_code == 1, "Command should fail with invalid project type"
         assert "Invalid project type" in result.output, "Error message should be shown"
-        assert not Path(
-            temp_project_dir, "project_config.yaml"
-        ).exists(), "Config file should not be created for invalid type"
+        assert not Path(temp_project_dir, "project_config.yaml").exists(), (
+            "Config file should not be created for invalid type"
+        )
 
         # Verify TemplateResolver was not called with invalid type
         mock_resolver.return_value.get_template_path.assert_not_called()

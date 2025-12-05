@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    env:
+      UV_PYTHON: {% raw %}${{ matrix.python-version }}{% endraw %}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python {% raw %}${{ matrix.python-version }}{% endraw %}
+        run: uv python install {% raw %}${{ matrix.python-version }}{% endraw %}
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Run ruff linting
+        run: uv run ruff check .
+
+      - name: Run ruff formatting check
+        run: uv run ruff format --check .
+{%- if cookiecutter.mypy == "y" %}
+
+      - name: Run mypy type checking
+        run: uv run mypy .
+{%- endif %}
+{%- if cookiecutter.deptry == "y" %}
+
+      - name: Run deptry
+        run: uv run deptry .
+{%- endif %}
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    env:
+      UV_PYTHON: {% raw %}${{ matrix.python-version }}{% endraw %}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python {% raw %}${{ matrix.python-version }}{% endraw %}
+        run: uv python install {% raw %}${{ matrix.python-version }}{% endraw %}
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Run tests with coverage
+        run: uv run pytest --cov={{cookiecutter.package_name}} --cov-report=xml
+{%- if cookiecutter.codecov == "y" %}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: {% raw %}${{ secrets.CODECOV_TOKEN }}{% endraw %}
+{%- endif %}

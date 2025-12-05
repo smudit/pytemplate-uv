@@ -317,17 +317,17 @@ class TestCommandInjectionPrevention:
             if mock_call.called:
                 # Verify that commands are passed as lists, not strings
                 call_args = mock_call.call_args[0][0]
-                assert isinstance(
-                    call_args, list
-                ), "Commands should be passed as lists to prevent injection"
+                assert isinstance(call_args, list), (
+                    "Commands should be passed as lists to prevent injection"
+                )
 
                 # Verify no shell metacharacters in individual arguments
                 for arg in call_args:
                     dangerous_chars = [";", "&", "|", "`", "$", "(", ")", "\n", "\r"]
                     for char in dangerous_chars:
-                        assert (
-                            char not in arg
-                        ), f"Dangerous character '{char}' found in command argument"
+                        assert char not in arg, (
+                            f"Dangerous character '{char}' found in command argument"
+                        )
 
 
 class TestConfigurationSecurity:

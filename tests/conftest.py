@@ -442,8 +442,7 @@ def mock_cookiecutter(monkeypatch):
             (project_path / "Dockerfile").write_text(dockerfile_content)
         if docker_compose_enabled:
             compose_content = (
-                "version: '3.8'\nservices:\n  app:\n    build: .\n"
-                "    ports:\n      - '8000:8000'\n"
+                "version: '3.8'\nservices:\n  app:\n    build: .\n    ports:\n      - '8000:8000'\n"
             )
             (project_path / "docker-compose.yml").write_text(compose_content)
 
@@ -465,7 +464,45 @@ def mock_cookiecutter(monkeypatch):
         if extra_context.get("include_github_actions") == "y":
             github_dir = project_path / ".github" / "workflows"
             github_dir.mkdir(parents=True, exist_ok=True)
-            (github_dir / "main.yml").write_text("name: CI\non: [push, pull_request]\n")
+            (github_dir / "ci.yml").write_text("name: CI\non: [push, pull_request]\n")
+
+        # Create Codecov config if enabled
+        if extra_context.get("codecov") == "y":
+            codecov_content = (
+                "coverage:\n  status:\n    project:\n      default:\n"
+                "        target: auto\n        threshold: 5%\n"
+            )
+            (project_path / ".codecov.yml").write_text(codecov_content)
+
+        # Create pre-commit config with deptry if enabled
+        precommit_hooks = ["ruff", "ruff-format"]
+        if extra_context.get("mypy") == "y":
+            precommit_hooks.append("mypy")
+        if extra_context.get("deptry") == "y":
+            precommit_hooks.append("deptry")
+
+        precommit_content = (
+            "repos:\n"
+            "  - repo: https://github.com/astral-sh/ruff-pre-commit\n"
+            "    hooks:\n"
+            "      - id: ruff\n"
+            "      - id: ruff-format\n"
+        )
+        if extra_context.get("mypy") == "y":
+            precommit_content += (
+                "  - repo: https://github.com/pre-commit/mirrors-mypy\n"
+                "    hooks:\n"
+                "      - id: mypy\n"
+            )
+        if extra_context.get("deptry") == "y":
+            precommit_content += (
+                "  - repo: local\n"
+                "    hooks:\n"
+                "      - id: deptry\n"
+                "        name: deptry\n"
+                "        entry: uv run deptry .\n"
+            )
+        (project_path / ".pre-commit-config.yaml").write_text(precommit_content)
 
         return str(project_path)
 
@@ -517,6 +554,19 @@ def sample_service_config(temp_config_dir: Path) -> Path:
         "docker": {"docker_image": True, "docker_compose": True},
         "devcontainer": {"enabled": True},
         "service_ports": {"ports": ["8000", "8080"]},
+        "development": {
+            "use_pytest": True,
+            "use_ruff": True,
+            "use_mypy": True,
+            "use_pre_commit": True,
+            "deptry": True,
+            "mkdocs": True,
+            "codecov": True,
+            "include_github_actions": True,
+            "envfile": ".env",
+            "command_line_interface": "no",
+            "command_line_bin_name": "",
+        },
     }
 
     config_path = temp_config_dir / "service_config.yaml"
@@ -551,6 +601,19 @@ def sample_workspace_config(temp_config_dir: Path) -> Path:
         "github": {"add_on_github": True, "repo_name": "test-workspace", "repo_private": False},
         "docker": {"docker_image": False, "docker_compose": False},
         "devcontainer": {"enabled": True},
+        "development": {
+            "use_pytest": True,
+            "use_ruff": True,
+            "use_mypy": True,
+            "use_pre_commit": True,
+            "deptry": True,
+            "mkdocs": True,
+            "codecov": True,
+            "include_github_actions": True,
+            "envfile": ".env",
+            "command_line_interface": "no",
+            "command_line_bin_name": "",
+        },
     }
 
     config_path = temp_config_dir / "workspace_config.yaml"

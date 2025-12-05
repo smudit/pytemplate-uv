@@ -35,9 +35,16 @@ development:
   use_ruff: true  # Handles both linting and formatting
   use_mypy: true
   use_pre_commit: true
+  deptry: true  # Dependency checker for unused/missing deps
 
   # Documentation
-  docs: true  # Generate API documentation
+  mkdocs: true  # Use MkDocs for documentation
+
+  # Coverage
+  codecov: true  # Upload coverage to Codecov
+
+  # CI/CD
+  include_github_actions: true  # Generate GitHub Actions workflow
 
   # Environment file
   envfile: ".env"

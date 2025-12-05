@@ -7,7 +7,10 @@
     "github_username": "{{ cookiecutter.get('github_username', 'your_username') }}",
     "python_version": "3.11",
     "primary_port": "8000",
-    "docs": "y",
+    "include_github_actions": "y",
+    "mkdocs": "y",
+    "deptry": "y",
+    "codecov": "y",
     "coverage": "y",
     "dockerfile": "y",
     "mypy": "y",
@@ -15,7 +18,10 @@
     "envfile": ".env",
 
     "_skip_if_present": [
-        "docs",
+        "include_github_actions",
+        "mkdocs",
+        "deptry",
+        "codecov",
         "coverage",
         "dockerfile",
         "mypy",

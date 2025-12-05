@@ -142,9 +142,9 @@ class TestServiceProjectCreation:
             result = creator.create_project_from_config()
 
             assert result is True, "Project creation should succeed"
-            assert (
-                Path(temp_project_dir) / "test-service"
-            ).exists(), "Project directory should be created"
+            assert (Path(temp_project_dir) / "test-service").exists(), (
+                "Project directory should be created"
+            )
 
     def test_create_service_project_with_addons(
         self, temp_project_dir: str, sample_service_config: Path
@@ -181,9 +181,9 @@ class TestServiceProjectCreation:
             result = creator.create_project_from_config()
 
             assert result is True, "Project creation should succeed"
-            assert (
-                Path(temp_project_dir) / "test-service"
-            ).exists(), "Project directory should be created"
+            assert (Path(temp_project_dir) / "test-service").exists(), (
+                "Project directory should be created"
+            )
 
 
 class TestGitHubIntegration:

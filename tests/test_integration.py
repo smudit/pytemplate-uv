@@ -446,6 +446,433 @@ class TestExternalToolIntegration:
             assert (project_path / "docker-compose.yml").exists()
 
 
+class TestToolchainFlagsIntegration:
+    """Test integration of new toolchain flags (deptry, codecov, mkdocs, include_github_actions)."""
+
+    def test_github_actions_enabled(self, temp_project_dir: Path, temp_config_dir: Path):
+        """Test that GitHub Actions workflow is created when include_github_actions is true."""
+        config_data = {
+            "project": {
+                "type": "service",
+                "name": "gh-actions-enabled-test",
+                "description": "Test with GitHub Actions enabled",
+                "author": "Test Author",
+                "email": "test@example.com",
+            },
+            "github": {"add_on_github": False},
+            "docker": {"docker_image": True, "docker_compose": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "use_pytest": True,
+                "use_ruff": True,
+                "use_mypy": True,
+                "use_pre_commit": True,
+                "deptry": True,
+                "mkdocs": False,
+                "codecov": False,
+                "include_github_actions": True,
+                "envfile": ".env",
+            },
+        }
+
+        config_path = temp_config_dir / "gh_actions_enabled_test.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        result = runner.invoke(app, ["create-project-from-config", str(config_path)])
+        assert result.exit_code == 0
+
+        project_path = Path(temp_project_dir) / "gh-actions-enabled-test"
+        if project_path.exists():
+            assert (project_path / ".github" / "workflows" / "ci.yml").exists(), (
+                "GitHub Actions workflow should be created when include_github_actions is true"
+            )
+
+    def test_github_actions_disabled(self, temp_project_dir: Path, temp_config_dir: Path):
+        """Test that GitHub Actions workflow is NOT created when include_github_actions is false."""
+        config_data = {
+            "project": {
+                "type": "service",
+                "name": "gh-actions-disabled-test",
+                "description": "Test with GitHub Actions disabled",
+                "author": "Test Author",
+                "email": "test@example.com",
+            },
+            "github": {"add_on_github": False},
+            "docker": {"docker_image": True, "docker_compose": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "use_pytest": True,
+                "use_ruff": True,
+                "use_mypy": True,
+                "use_pre_commit": True,
+                "deptry": True,
+                "mkdocs": False,
+                "codecov": False,
+                "include_github_actions": False,
+                "envfile": ".env",
+            },
+        }
+
+        config_path = temp_config_dir / "gh_actions_disabled_test.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        result = runner.invoke(app, ["create-project-from-config", str(config_path)])
+        assert result.exit_code == 0
+
+        project_path = Path(temp_project_dir) / "gh-actions-disabled-test"
+        if project_path.exists():
+            assert not (project_path / ".github").exists(), (
+                "GitHub Actions directory should NOT exist when include_github_actions is false"
+            )
+
+    def test_mkdocs_enabled(self, temp_project_dir: Path, temp_config_dir: Path):
+        """Test that MkDocs files are created when mkdocs is true."""
+        config_data = {
+            "project": {
+                "type": "service",
+                "name": "mkdocs-enabled-test",
+                "description": "Test with MkDocs enabled",
+                "author": "Test Author",
+                "email": "test@example.com",
+            },
+            "github": {"add_on_github": False},
+            "docker": {"docker_image": True, "docker_compose": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "use_pytest": True,
+                "use_ruff": True,
+                "use_mypy": True,
+                "use_pre_commit": True,
+                "deptry": True,
+                "mkdocs": True,
+                "codecov": False,
+                "include_github_actions": False,
+                "envfile": ".env",
+            },
+        }
+
+        config_path = temp_config_dir / "mkdocs_enabled_test.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        result = runner.invoke(app, ["create-project-from-config", str(config_path)])
+        assert result.exit_code == 0
+
+        project_path = Path(temp_project_dir) / "mkdocs-enabled-test"
+        if project_path.exists():
+            assert (project_path / "mkdocs.yml").exists(), (
+                "mkdocs.yml should be created when mkdocs is true"
+            )
+            assert (project_path / "docs").exists(), (
+                "docs directory should be created when mkdocs is true"
+            )
+            assert (project_path / "docs" / "index.md").exists(), (
+                "docs/index.md should be created when mkdocs is true"
+            )
+
+    def test_mkdocs_disabled(self, temp_project_dir: Path, temp_config_dir: Path):
+        """Test that MkDocs files are NOT created when mkdocs is false."""
+        config_data = {
+            "project": {
+                "type": "service",
+                "name": "mkdocs-disabled-test",
+                "description": "Test with MkDocs disabled",
+                "author": "Test Author",
+                "email": "test@example.com",
+            },
+            "github": {"add_on_github": False},
+            "docker": {"docker_image": True, "docker_compose": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "use_pytest": True,
+                "use_ruff": True,
+                "use_mypy": True,
+                "use_pre_commit": True,
+                "deptry": True,
+                "mkdocs": False,
+                "codecov": False,
+                "include_github_actions": False,
+                "envfile": ".env",
+            },
+        }
+
+        config_path = temp_config_dir / "mkdocs_disabled_test.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        result = runner.invoke(app, ["create-project-from-config", str(config_path)])
+        assert result.exit_code == 0
+
+        project_path = Path(temp_project_dir) / "mkdocs-disabled-test"
+        if project_path.exists():
+            assert not (project_path / "mkdocs.yml").exists(), (
+                "mkdocs.yml should NOT be created when mkdocs is false"
+            )
+            assert not (project_path / "docs").exists(), (
+                "docs directory should NOT be created when mkdocs is false"
+            )
+
+    def test_codecov_enabled(self, temp_project_dir: Path, temp_config_dir: Path):
+        """Test that Codecov config is created when codecov is true."""
+        config_data = {
+            "project": {
+                "type": "service",
+                "name": "codecov-enabled-test",
+                "description": "Test with Codecov enabled",
+                "author": "Test Author",
+                "email": "test@example.com",
+            },
+            "github": {"add_on_github": False},
+            "docker": {"docker_image": True, "docker_compose": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "use_pytest": True,
+                "use_ruff": True,
+                "use_mypy": True,
+                "use_pre_commit": True,
+                "deptry": True,
+                "mkdocs": False,
+                "codecov": True,
+                "include_github_actions": True,
+                "envfile": ".env",
+            },
+        }
+
+        config_path = temp_config_dir / "codecov_enabled_test.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        result = runner.invoke(app, ["create-project-from-config", str(config_path)])
+        assert result.exit_code == 0
+
+        project_path = Path(temp_project_dir) / "codecov-enabled-test"
+        if project_path.exists():
+            assert (project_path / ".codecov.yml").exists(), (
+                ".codecov.yml should be created when codecov is true"
+            )
+
+    def test_codecov_disabled(self, temp_project_dir: Path, temp_config_dir: Path):
+        """Test that Codecov config is NOT created when codecov is false."""
+        config_data = {
+            "project": {
+                "type": "service",
+                "name": "codecov-disabled-test",
+                "description": "Test with Codecov disabled",
+                "author": "Test Author",
+                "email": "test@example.com",
+            },
+            "github": {"add_on_github": False},
+            "docker": {"docker_image": True, "docker_compose": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "use_pytest": True,
+                "use_ruff": True,
+                "use_mypy": True,
+                "use_pre_commit": True,
+                "deptry": True,
+                "mkdocs": False,
+                "codecov": False,
+                "include_github_actions": False,
+                "envfile": ".env",
+            },
+        }
+
+        config_path = temp_config_dir / "codecov_disabled_test.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        result = runner.invoke(app, ["create-project-from-config", str(config_path)])
+        assert result.exit_code == 0
+
+        project_path = Path(temp_project_dir) / "codecov-disabled-test"
+        if project_path.exists():
+            assert not (project_path / ".codecov.yml").exists(), (
+                ".codecov.yml should NOT be created when codecov is false"
+            )
+
+    def test_deptry_in_precommit_when_enabled(self, temp_project_dir: Path, temp_config_dir: Path):
+        """Test that deptry hook is in pre-commit config when deptry is true."""
+        config_data = {
+            "project": {
+                "type": "service",
+                "name": "deptry-enabled-test",
+                "description": "Test with deptry enabled",
+                "author": "Test Author",
+                "email": "test@example.com",
+            },
+            "github": {"add_on_github": False},
+            "docker": {"docker_image": True, "docker_compose": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "use_pytest": True,
+                "use_ruff": True,
+                "use_mypy": True,
+                "use_pre_commit": True,
+                "deptry": True,
+                "mkdocs": False,
+                "codecov": False,
+                "include_github_actions": False,
+                "envfile": ".env",
+            },
+        }
+
+        config_path = temp_config_dir / "deptry_enabled_test.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        result = runner.invoke(app, ["create-project-from-config", str(config_path)])
+        assert result.exit_code == 0
+
+        project_path = Path(temp_project_dir) / "deptry-enabled-test"
+        if project_path.exists():
+            precommit_path = project_path / ".pre-commit-config.yaml"
+            if precommit_path.exists():
+                content = precommit_path.read_text()
+                assert "deptry" in content, (
+                    "deptry hook should be in .pre-commit-config.yaml when deptry is true"
+                )
+
+    def test_deptry_not_in_precommit_when_disabled(
+        self, temp_project_dir: Path, temp_config_dir: Path
+    ):
+        """Test that deptry hook is NOT in pre-commit config when deptry is false."""
+        config_data = {
+            "project": {
+                "type": "service",
+                "name": "deptry-disabled-test",
+                "description": "Test with deptry disabled",
+                "author": "Test Author",
+                "email": "test@example.com",
+            },
+            "github": {"add_on_github": False},
+            "docker": {"docker_image": True, "docker_compose": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "use_pytest": True,
+                "use_ruff": True,
+                "use_mypy": True,
+                "use_pre_commit": True,
+                "deptry": False,
+                "mkdocs": False,
+                "codecov": False,
+                "include_github_actions": False,
+                "envfile": ".env",
+            },
+        }
+
+        config_path = temp_config_dir / "deptry_disabled_test.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        result = runner.invoke(app, ["create-project-from-config", str(config_path)])
+        assert result.exit_code == 0
+
+        project_path = Path(temp_project_dir) / "deptry-disabled-test"
+        if project_path.exists():
+            precommit_path = project_path / ".pre-commit-config.yaml"
+            if precommit_path.exists():
+                content = precommit_path.read_text()
+                assert "deptry" not in content, (
+                    "deptry hook should NOT be in .pre-commit-config.yaml when deptry is false"
+                )
+
+    def test_all_toolchain_flags_enabled(self, temp_project_dir: Path, temp_config_dir: Path):
+        """Test that all toolchain artifacts are created when all flags are enabled."""
+        config_data = {
+            "project": {
+                "type": "service",
+                "name": "all-flags-enabled-test",
+                "description": "Test with all toolchain flags enabled",
+                "author": "Test Author",
+                "email": "test@example.com",
+            },
+            "github": {"add_on_github": False},
+            "docker": {"docker_image": True, "docker_compose": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "use_pytest": True,
+                "use_ruff": True,
+                "use_mypy": True,
+                "use_pre_commit": True,
+                "deptry": True,
+                "mkdocs": True,
+                "codecov": True,
+                "include_github_actions": True,
+                "envfile": ".env",
+            },
+        }
+
+        config_path = temp_config_dir / "all_flags_enabled_test.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        result = runner.invoke(app, ["create-project-from-config", str(config_path)])
+        assert result.exit_code == 0
+
+        project_path = Path(temp_project_dir) / "all-flags-enabled-test"
+        if project_path.exists():
+            # GitHub Actions
+            assert (project_path / ".github" / "workflows" / "ci.yml").exists()
+            # MkDocs
+            assert (project_path / "mkdocs.yml").exists()
+            assert (project_path / "docs" / "index.md").exists()
+            # Codecov
+            assert (project_path / ".codecov.yml").exists()
+            # Deptry
+            precommit_path = project_path / ".pre-commit-config.yaml"
+            if precommit_path.exists():
+                assert "deptry" in precommit_path.read_text()
+
+    def test_all_toolchain_flags_disabled(self, temp_project_dir: Path, temp_config_dir: Path):
+        """Test that no toolchain artifacts are created when all flags are disabled."""
+        config_data = {
+            "project": {
+                "type": "service",
+                "name": "all-flags-disabled-test",
+                "description": "Test with all toolchain flags disabled",
+                "author": "Test Author",
+                "email": "test@example.com",
+            },
+            "github": {"add_on_github": False},
+            "docker": {"docker_image": True, "docker_compose": False},
+            "devcontainer": {"enabled": False},
+            "development": {
+                "use_pytest": True,
+                "use_ruff": True,
+                "use_mypy": False,
+                "use_pre_commit": True,
+                "deptry": False,
+                "mkdocs": False,
+                "codecov": False,
+                "include_github_actions": False,
+                "envfile": ".env",
+            },
+        }
+
+        config_path = temp_config_dir / "all_flags_disabled_test.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        result = runner.invoke(app, ["create-project-from-config", str(config_path)])
+        assert result.exit_code == 0
+
+        project_path = Path(temp_project_dir) / "all-flags-disabled-test"
+        if project_path.exists():
+            # GitHub Actions
+            assert not (project_path / ".github").exists()
+            # MkDocs
+            assert not (project_path / "mkdocs.yml").exists()
+            assert not (project_path / "docs").exists()
+            # Codecov
+            assert not (project_path / ".codecov.yml").exists()
+            # Deptry
+            precommit_path = project_path / ".pre-commit-config.yaml"
+            if precommit_path.exists():
+                assert "deptry" not in precommit_path.read_text()
+
+
 class TestPerformanceIntegration:
     """Test performance aspects of integrated workflows."""
 
@@ -486,9 +913,9 @@ class TestPerformanceIntegration:
         total_time = end_time - start_time
 
         # Should complete within reasonable time (adjust threshold as needed)
-        assert (
-            total_time < 30
-        ), f"Creating {project_count} projects took {total_time:.2f}s, which is too slow"
+        assert total_time < 30, (
+            f"Creating {project_count} projects took {total_time:.2f}s, which is too slow"
+        )
 
     def test_large_config_handling_performance(self, temp_project_dir: Path, temp_config_dir: Path):
         """Test performance with large configuration files."""
@@ -528,7 +955,7 @@ class TestPerformanceIntegration:
         processing_time = end_time - start_time
 
         # Should handle large configs efficiently
-        assert (
-            processing_time < 10
-        ), f"Large config processing took {processing_time:.2f}s, which is too slow"
+        assert processing_time < 10, (
+            f"Large config processing took {processing_time:.2f}s, which is too slow"
+        )
         assert result.exit_code == 0
