@@ -16,6 +16,7 @@ config_specs:
 # Shared resources - Common files that can be copied to any project
 shared_resources:
   coding_rules: templates/shared/coding_rules.md
+  taskfile_lib: templates/shared/Taskfile.lib.yaml
 
 # AI copilots configuration
 # Format: copilot_name: rules_file_path

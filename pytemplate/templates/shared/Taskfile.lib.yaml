@@ -1,0 +1,148 @@
+# https://taskfile.dev
+version: '3'
+
+vars:
+  # These will be replaced during project creation
+  PROJECT_SLUG: "{{PROJECT_SLUG}}"
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list-all
+    silent: true
+
+  # ============================================================================
+  # Development
+  # ============================================================================
+  setup:
+    desc: Create virtual environment and install dependencies
+    cmds:
+      - echo "Creating virtual environment and installing dependencies..."
+      - uv sync
+      - uv run pre-commit install
+
+  dev:
+    desc: Set up development environment (pre-commit, etc.)
+    deps: [setup]
+    cmds:
+      - echo "Development environment ready."
+
+  # ============================================================================
+  # Code Quality
+  # ============================================================================
+  lint:
+    desc: Run code linting
+    cmds:
+      - echo "Running linter..."
+      - uv run ruff check .
+
+  lint-fix:
+    desc: Run linter with auto-fix
+    cmds:
+      - echo "Running linter with auto-fix..."
+      - uv run ruff check . --fix
+
+  format:
+    desc: Format code
+    cmds:
+      - echo "Formatting code..."
+      - uv run ruff format .
+
+  format-check:
+    desc: Check code formatting
+    cmds:
+      - echo "Checking code formatting..."
+      - uv run ruff format . --check
+
+  typecheck:
+    desc: Run type checking with mypy
+    cmds:
+      - echo "Running type checker..."
+      - uv run mypy .
+
+  deptry:
+    desc: Check for dependency issues
+    cmds:
+      - echo "Checking dependencies with deptry..."
+      - uv run deptry src
+
+  quality:
+    desc: Run all quality checks
+    cmds:
+      - task: lint
+      - task: format-check
+      - task: typecheck
+      - task: deptry
+      - echo "All quality checks passed!"
+
+  # ============================================================================
+  # Testing
+  # ============================================================================
+  test:
+    desc: Run tests
+    cmds:
+      - echo "Running tests..."
+      - uv run pytest tests/
+
+  test-cov:
+    desc: Run tests with coverage report
+    cmds:
+      - echo "Running tests with coverage..."
+      - uv run pytest --cov --cov-report=term-missing
+
+  # ============================================================================
+  # Documentation
+  # ============================================================================
+  docs-serve:
+    desc: Serve documentation locally
+    cmds:
+      - echo "Serving documentation..."
+      - uv run mkdocs serve
+
+  docs-build:
+    desc: Build documentation
+    cmds:
+      - echo "Building documentation..."
+      - uv run mkdocs build
+
+  # ============================================================================
+  # Packaging
+  # ============================================================================
+  build:
+    desc: Build distribution packages
+    cmds:
+      - echo "Building distribution packages..."
+      - uv build
+
+  publish:
+    desc: Publish package to PyPI
+    deps: [build]
+    cmds:
+      - echo "Publishing to PyPI..."
+      - uv publish
+
+  # ============================================================================
+  # Cleanup
+  # ============================================================================
+  clean:
+    desc: Remove virtual environment and cache files
+    cmds:
+      - echo "Cleaning up..."
+      - rm -rf .venv .pytest_cache .ruff_cache .mypy_cache .coverage dist *.egg-info htmlcov
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+    platforms: [linux, darwin]
+
+  clean:windows:
+    desc: Remove virtual environment and cache files (Windows)
+    cmds:
+      - echo "Cleaning up..."
+      - cmd /c "if exist .venv rmdir /s /q .venv"
+      - cmd /c "if exist .pytest_cache rmdir /s /q .pytest_cache"
+      - cmd /c "if exist .ruff_cache rmdir /s /q .ruff_cache"
+      - cmd /c "if exist .mypy_cache rmdir /s /q .mypy_cache"
+      - cmd /c "if exist .coverage del /f /q .coverage"
+      - cmd /c "if exist dist rmdir /s /q dist"
+      - cmd /c "if exist htmlcov rmdir /s /q htmlcov"
+      - cmd /c "for /d /r . %%d in (__pycache__) do @if exist \"%%d\" rmdir /s /q \"%%d\""
+    platforms: [windows]
