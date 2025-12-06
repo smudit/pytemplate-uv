@@ -17,10 +17,19 @@ uv add {{cookiecutter.project_name}}
 ## Quick Start
 
 ```python
-from {{cookiecutter.package_name}} import main
+from {{cookiecutter.package_name}}.logger import logger, setup_logger
 
-# Get started with the package
-main.hello()
+# Configure logging (optional - reads from settings by default)
+setup_logger()
+
+# Use the logger
+logger.info("Application started")
+```
+
+Or use the CLI:
+
+```bash
+{{cookiecutter.package_name}} --help
 ```
 
 ## Development
@@ -30,13 +39,13 @@ Clone the repository and install dependencies:
 ```bash
 git clone https://github.com/{{cookiecutter.github_username}}/{{cookiecutter.project_name}}.git
 cd {{cookiecutter.project_name}}
-uv sync
+task setup
 ```
 
 Run tests:
 
 ```bash
-make test
+task test
 ```
 
 ## License

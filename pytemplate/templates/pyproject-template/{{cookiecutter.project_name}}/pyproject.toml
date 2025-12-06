@@ -61,7 +61,7 @@ build-backend = "setuptools.build_meta"
 packages = ["{{cookiecutter.package_name}}"]
 
 [tool.ruff]
-line-length = 88
+line-length = 100
 target-version = "py{{cookiecutter.python_version|replace('.', '')}}"
 select = [
     "E",   # pycodestyle errors
@@ -72,7 +72,9 @@ select = [
     "UP",  # pyupgrade
     "C4",  # flake8-comprehensions
 ]
-ignore = ["E501"]  # Line too long (handled by black)
+# E501 (line too long) is handled by Black formatter - ignore to avoid conflicts
+# with lines Black cannot break (URLs, long strings, etc.)
+ignore = ["E501"]
 
 [tool.ruff.isort]
 known-first-party = ["{{cookiecutter.package_name}}"]
@@ -80,7 +82,7 @@ combine-as-imports = true
 lines-after-imports = 2
 
 [tool.black]
-line-length = 88
+line-length = 100
 target-version = ['py{{cookiecutter.python_version|replace('.', '')}}']
 preview = true
 

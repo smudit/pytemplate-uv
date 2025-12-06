@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Project Discovery Script
+"""Project Discovery Script.
 
 Discovers projects using the old template and generates a migration inventory.
 Searches for template markers (Dynaconf, Loguru, Typer) in local directories
@@ -25,14 +24,13 @@ from datetime import datetime
 from pathlib import Path
 
 try:
-    import typer
     from rich.console import Console
     from rich.table import Table
 
     HAS_RICH = True
 except ImportError:
     HAS_RICH = False
-    print("Note: Install typer and rich for better output: uv add typer rich")
+    print("Note: Install rich for better output: uv add rich")
 
 # Template markers to search for
 TEMPLATE_MARKERS = [
@@ -79,9 +77,7 @@ class ProjectInfo:
 def run_command(cmd: list[str], cwd: str | None = None) -> tuple[int, str, str]:
     """Run a shell command and return exit code, stdout, stderr."""
     try:
-        result = subprocess.run(
-            cmd, cwd=cwd, capture_output=True, text=True, timeout=30
-        )
+        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=30)
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
         return 1, "", "Command timed out"
@@ -120,9 +116,7 @@ def search_for_markers(project_path: Path) -> list[str]:
 
 def get_last_commit_date(project_path: Path) -> str:
     """Get the date of the last git commit."""
-    code, stdout, _ = run_command(
-        ["git", "log", "-1", "--format=%Y-%m-%d"], cwd=str(project_path)
-    )
+    code, stdout, _ = run_command(["git", "log", "-1", "--format=%Y-%m-%d"], cwd=str(project_path))
     if code == 0 and stdout.strip():
         return stdout.strip()
     return ""
@@ -187,12 +181,8 @@ def analyze_project(project_path: Path) -> ProjectInfo | None:
         return None
 
     # Check for old vs new template indicators
-    info.uses_old_template = any(
-        check_file_exists(project_path, f) for f in OLD_TEMPLATE_FILES
-    )
-    info.uses_new_template = any(
-        check_file_exists(project_path, f) for f in NEW_TEMPLATE_FILES
-    )
+    info.uses_old_template = any(check_file_exists(project_path, f) for f in OLD_TEMPLATE_FILES)
+    info.uses_new_template = any(check_file_exists(project_path, f) for f in NEW_TEMPLATE_FILES)
 
     # Get additional info
     info.last_modified = get_last_commit_date(project_path)
@@ -312,7 +302,9 @@ def output_table(projects: list[ProjectInfo]) -> None:
             status_icon = (
                 "🟢" if p.status == "active" else "🟡" if p.status == "maintenance" else "🔴"
             )
-            template_status = "✅ New" if p.uses_new_template else "⚠️ Old" if p.uses_old_template else "❓"
+            template_status = (
+                "✅ New" if p.uses_new_template else "⚠️ Old" if p.uses_old_template else "❓"
+            )
             print(f"{status_icon} {p.name} [{p.migration_priority}] {template_status}")
         return
 
@@ -329,19 +321,22 @@ def output_table(projects: list[ProjectInfo]) -> None:
 
     for p in projects:
         status_icon = (
-            "🟢 Active" if p.status == "active"
-            else "🟡 Maint" if p.status == "maintenance"
+            "🟢 Active"
+            if p.status == "active"
+            else "🟡 Maint"
+            if p.status == "maintenance"
             else "🔴 Legacy"
         )
         template_status = (
-            "✅ New" if p.uses_new_template
-            else "⚠️ Old" if p.uses_old_template
-            else "❓ Unknown"
+            "✅ New" if p.uses_new_template else "⚠️ Old" if p.uses_old_template else "❓ Unknown"
         )
         priority_style = (
-            "[red]HIGH[/red]" if p.migration_priority == "high"
-            else "[yellow]MEDIUM[/yellow]" if p.migration_priority == "medium"
-            else "[green]LOW[/green]" if p.migration_priority == "low"
+            "[red]HIGH[/red]"
+            if p.migration_priority == "high"
+            else "[yellow]MEDIUM[/yellow]"
+            if p.migration_priority == "medium"
+            else "[green]LOW[/green]"
+            if p.migration_priority == "low"
             else "[dim]NONE[/dim]"
         )
 
@@ -363,7 +358,12 @@ def output_yaml(projects: list[ProjectInfo], output_path: Path) -> None:
     lines = ["# Project Migration Inventory", f"# Generated: {datetime.now().isoformat()}", ""]
 
     # Group by priority
-    by_priority = {"high": [], "medium": [], "low": [], "none": []}
+    by_priority: dict[str, list[ProjectInfo]] = {
+        "high": [],
+        "medium": [],
+        "low": [],
+        "none": [],
+    }
     for p in projects:
         by_priority.get(p.migration_priority, by_priority["medium"]).append(p)
 
@@ -405,8 +405,8 @@ def _project_to_yaml(p: ProjectInfo) -> list[str]:
     ]
 
 
-def main():
-    """Main entry point."""
+def main() -> None:
+    """Run project discovery and generate migration inventory."""
     if len(sys.argv) < 3:
         print(__doc__)
         sys.exit(1)
@@ -454,7 +454,7 @@ def main():
     needs_migration = [p for p in projects if p.migration_priority in ("high", "medium", "low")]
     already_done = [p for p in projects if p.migration_priority == "none"]
 
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Need migration: {len(needs_migration)}")
     print(f"  Already migrated: {len(already_done)}")
     print(f"  High priority: {len([p for p in projects if p.migration_priority == 'high'])}")

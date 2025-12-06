@@ -1,10 +1,19 @@
-import sys
+"""Configuration management using Dynaconf.
+
+Usage:
+    from {{cookiecutter.package_name}}.config import settings
+
+    # Access configuration values
+    log_level = settings.get("LOG_LEVEL", "INFO")
+    debug_mode = settings.get("DEBUG", False)
+"""
+
 from pathlib import Path
 
 from dynaconf import Dynaconf
-from loguru import logger
 
-# Create base directory for the project
+
+# Base directory for the project
 BASE_DIR = Path(__file__).parent.parent
 
 # Configure settings with defaults for missing files
@@ -16,49 +25,30 @@ settings = Dynaconf(
     dotenv_path=f"{BASE_DIR}/{{cookiecutter.envfile}}",
 )
 
-# Default configuration values (used when settings files don't exist)
-_DEFAULT_LOG_LEVEL = "INFO"
-_DEFAULT_LOG_FILE = f"{BASE_DIR}/logs/app.log"
+def setup_logger(*args, **kwargs):
+    """Deprecated: Import from logger module instead.
 
+    This function has been moved to logger.py for better separation of concerns.
+    Please update your imports to: from {{cookiecutter.package_name}}.logger import setup_logger
 
-def setup_logger():
-    """Configure loguru logger."""
-    # Remove any default handlers
-    logger.remove()
+    Args:
+        *args: Positional arguments passed to the new setup_logger.
+        **kwargs: Keyword arguments passed to the new setup_logger.
 
-    # Get log level with fallback to default
-    log_level = settings.get("LOG_LEVEL", _DEFAULT_LOG_LEVEL)
-    log_file = settings.get("LOG_FILE", _DEFAULT_LOG_FILE)
+    Returns:
+        Result from the new setup_logger function.
+    """
+    import warnings
 
-    # Set custom log level colors
-    logger.level("DEBUG", color="<blue>")
-    logger.level("INFO", color="<green>")
-    logger.level("WARNING", color="<yellow>")
-    logger.level("ERROR", color="<red>")
-    logger.level("CRITICAL", color="<bold><red>")
-
-    # Add a console sink (stdout) with color
-    logger.add(
-        sys.stdout,
-        colorize=True,
-        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{message}</level>",
-        level=log_level,
+    warnings.warn(
+        "setup_logger in config.py is deprecated. "
+        "Import from {{cookiecutter.package_name}}.logger instead.",
+        DeprecationWarning,
+        stacklevel=2,
     )
+    from .logger import setup_logger as new_setup_logger
 
-    # Create logs directory if it doesn't exist
-    log_path = Path(log_file).parent
-    log_path.mkdir(parents=True, exist_ok=True)
-
-    # Add a file sink with rotation
-    logger.add(
-        log_file,
-        rotation="10 MB",  # Rotate when file reaches 10MB
-        retention="1 week",  # Keep logs for 1 week
-        compression="zip",  # Compress rotated logs
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-        level=log_level,
-    )
+    return new_setup_logger(*args, **kwargs)
 
 
-# Setup logger on module import
-setup_logger()
+__all__ = ["settings", "BASE_DIR", "setup_logger"]

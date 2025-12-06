@@ -40,10 +40,12 @@ def main() -> None:
     if codecov != "y":
         remove_file(".codecov.yml")
 
-    # Remove Dockerfile if not enabled
+    # Remove Docker files if not enabled
     if dockerfile != "y":
         remove_file("Dockerfile")
         remove_file(".dockerignore")
+        remove_file("docker-compose.yml")
+        remove_dir(".devcontainer")
 
 
 if __name__ == "__main__":

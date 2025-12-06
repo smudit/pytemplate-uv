@@ -19,7 +19,7 @@ tasks:
     desc: Create virtual environment and install dependencies
     cmds:
       - echo "Creating virtual environment and installing dependencies..."
-      - uv sync
+      - uv sync --extra dev --extra test
       - uv run pre-commit install
 
   dev:

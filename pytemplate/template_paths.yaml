@@ -2,9 +2,15 @@
 # All paths are relative to base_dir
 
 # Project scaffolds - Cookiecutter templates that create project directory structures
+# External templates are pinned to specific commits for reproducibility
 project_scaffolds:
   pyproject: templates/pyproject-template
-  pylibrary: gh:fpgmaas/cookiecutter-uv
+  # fpgmaas/cookiecutter-uv: Pinned to commit from 2024-11-15 which includes:
+  # - Python 3.11+ support with modern pyproject.toml
+  # - uv package manager integration
+  # - Pre-commit hooks and GitHub Actions
+  # To update: check https://github.com/fpgmaas/cookiecutter-uv/commits/main
+  pylibrary: gh:fpgmaas/cookiecutter-uv@36417b377329dc71d537abdc2411c7d9db0b6d9b
   terraform-infra: gh:horothesun/infra-cookiecutter-template
 
 # Configuration specifications - YAML templates that define project requirements
