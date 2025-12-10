@@ -1,45 +1,23 @@
 [build-system]
-requires = ["setuptools>=68.2.0", "wheel", "setuptools_scm[toml]>=7.1.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "pytemplate-uv"
 version = "0.2.8"
-description = """PyTemplate UV: A Modern Python Project Generator
-
-A powerful CLI tool that simplifies Python project creation using the `uv` package manager. Streamline your development workflow with standardized, production-ready project templates.
-
-Key Features:
-- 🚀 Rapid project initialization with predefined templates
-- 🔧 Multiple template support (FastAPI, Standard Python projects)
-- 📦 Seamless integration with `uv` for efficient package management
-- 🧪 Built-in testing and quality assurance infrastructure
-- 🔍 Preconfigured linting and type checking support
-
-Ideal for developers looking to bootstrap Python projects quickly with best practices and modern tooling."""
+description = "PyTemplate UV: A Modern Python Project Generator using uv package manager"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
     {name = "Leo Liu", email = "yuxuzi@gmail.com"}
 ]
-keywords = [
-    "python", 
-    "template", 
-    "project-generator", 
-    "uv", 
-    "cookiecutter", 
-    "cli"
-]
+keywords = ["python"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Utilities",
-    "Typing :: Typed"
 ]
 
 dependencies = [
@@ -49,130 +27,84 @@ dependencies = [
     "loguru>=0.7.3",
     "pyyaml>=6.0.2",
     "dynaconf>=3.2.10",
-    "toml>=0.10.2",
+    "toml>=0.10.2"
 ]
-
-[project.urls]
-Homepage = "https://github.com/yuxuzi/pytemplate-uv"
-Repository = "https://github.com/yuxuzi/pytemplate-uv"
-Issues = "https://github.com/yuxuzi/pytemplate-uv/issues"
-Changelog = "https://github.com/yuxuzi/pytemplate-uv/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.1.9",
     "black>=23.12.1",
-    "pytest>=7.4.4",
-    "pre-commit>=3.6.0",
-    "mypy>=1.15.0",
+    "build>=1.0.0",
     "coverage>=7.3.2",
+    "deptry>=0.23.1",
+    "mypy>=1.15.0",
+    "pre-commit-hooks>=4.5.0",
+    "pre-commit>=3.6.0",
     "pytest-cov>=6.0.0",
     "pytest>=7.4.4",
-    "deptry>=0.23.1",
-
+    "ruff>=0.1.9",
+    "twine>=4.0.0"
 ]
-docs = [
-    "mkdocs>=1.5.3",
-    "mkdocstrings[python]>=0.24.0"
+test = [
+    "pytest>=7.4.4",
+    "pytest-cov>=4.1.0",
 ]
-
-[tool.setuptools]
-packages = ["pytemplate"]
 
 [project.scripts]
 pytemplate = "pytemplate.main:app"
 pytemplate-custom = "pytemplate.main:custom_project_cli"
 
-[tool.setuptools.package-data]
-"pytemplate" = [
-    "template_paths.yaml",
-    "templates/**/*",
-    "templates/*",
-    "templates/pyproject-template/**/*",
-    "templates/configs/**/*",
-    "templates/shared/**/*"
-]
-
-[tool.setuptools_scm]
-write_to = "version.py"
+[tool.hatch.build.targets.wheel]
+packages = ["pytemplate"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-exclude = [
-    "archive",
-    "pytemplate/templates",
-    "migrate_to_uv.py",
-]
 
 [tool.ruff.lint]
 select = [
-    "E",    # pycodestyle errors
-    "W",    # pycodestyle warnings
-    "F",    # pyflakes
-    "I",    # isort
-    "B",    # flake8-bugbear
-    "UP",   # pyupgrade
-    "N",    # pep8-naming
-    "D",    # pydocstyle
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "C4",  # flake8-comprehensions
 ]
-ignore = [
-    "D100",  # Missing docstring in public module
-    "D101",  # Missing docstring in public class
-    "D203",  # one-blank-line-before-class (incompatible with D211)
-    "D213",  # multi-line-summary-second-line (incompatible with D212)
-    "B017",  # pytest.raises(Exception) is used for testing exceptions
-    "B008",  # Do not perform function call in argument defaults (typer pattern)
-]
+# E501 (line too long) is handled by Black formatter
+ignore = ["E501"]
 
-[tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D103"]  # Ignore missing docstrings in tests
-"pytemplate/project_creator.py" = ["C901"]  # Complex functions are necessary for project creation
-"migrate_to_uv.py" = ["C901"]  # Migration utility has complex logic
+[tool.ruff.lint.isort]
+known-first-party = ["pytemplate"]
+combine-as-imports = true
+lines-after-imports = 2
 
 [tool.black]
 line-length = 100
 target-version = ['py311']
+preview = true
 
 [tool.mypy]
 python_version = "3.11"
-warn_return_any = false
+strict = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_configs = true
 ignore_missing_imports = true
-exclude = [
-    "archive",
-    "pytemplate/templates",
-    "build",
-    "dist",
-    "migrate_to_uv.py",
-]
 
 [tool.pytest.ini_options]
-norecursedirs = [
-    "templates",
-    ".*",
-    "build",
-    "dist",
-    "node_modules"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=pytemplate --cov-report=term-missing"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
 ]
-log_level = "ERROR"
+
+[tool.coverage.run]
+source = ["pytemplate"]
+omit = ["tests/*"]
 
 [tool.deptry]
-ignore_notebooks = true
-ignore = ["DEP002"]
-known_first_party = ["pytemplate"]
-extend_exclude = [
-    "tests",
-    "docs",
-    "archive",
-    "templates",
-    ".venv",
-    "build",
-    "dist",
-]
-
-[dependency-groups]
-dev = [
-    "types-pyyaml>=6.0.12.20250915",
-]
-
-    
+extend_exclude = ["tests", "docs"]

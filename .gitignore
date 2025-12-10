@@ -22,7 +22,6 @@ wheels/
 MANIFEST
 
 # Virtual Environments
-.env
 .venv
 venv/
 ENV/
@@ -86,3 +85,13 @@ version.py
 .aider*
 .qodo
 docs/code_reviews/*
+# uv
+.venv/
+uv.lock
+
+# Task
+.task/
+
+# Secrets
+.env
+.envrc
